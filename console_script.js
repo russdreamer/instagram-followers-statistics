@@ -100,7 +100,6 @@ function getYouFollow(followersMap, followingsMap) {
 
 function usersMapToHTML(usersMap) {
 	const wrapDiv = document.createElement('DIV');
-	usersMap = new Map(usersMap);
 
 	if (usersMap.size == 0) {
 		wrapDiv.innerHTML = "Nobody during this period";
@@ -133,6 +132,8 @@ function extractUsersMap(usersArray, usersMap) {
 }
 
 function getPresNumber(number) {
+	if (number == 0) return number;
+
 	let num = number;
 	while (num >= 1000) {
 		num = num / 1000; 
@@ -142,11 +143,11 @@ function getPresNumber(number) {
 		return number;
 	} else if (rate <= 1000) {
 		return parseFloat(num.toFixed(1)) + "K";
-	} else if (rate <= 1_000_000) {
+	} else if (rate <= 1000000) {
 		return parseFloat(num.toFixed(1)) + "M";
-	} else if (rate <= 1_000_000_000) {
+	} else if (rate <= 1000000000) {
 		return parseFloat(num.toFixed(1)) + "B";
-	} else return parseFloat((number / 1_000_000_000_000).toFixed(1)) + "T";
+	} else return parseFloat((number / 1000000000000).toFixed(1)) + "T";
 }
 
 function showLoader() {
@@ -172,6 +173,8 @@ function showFollowersTable(stat) {
 	wrapDiv.appendChild(tabs);
 
 	stat.statMaps.slice().reverse().forEach(statMap => {
+		statMap.followers = new Map(statMap.followers);
+		statMap.unfollowers = new Map(statMap.unfollowers);
 		const tab_btn = document.createElement("button");
 		tab_btn.setAttribute("class", "tablinks");
 		tab_btn.setAttribute("onclick", "openTab(event, '" + statMap.date + "', 'tablinks', 'tabcontent')");
@@ -188,10 +191,10 @@ function showFollowersTable(stat) {
 		const unfollowers_btn = document.createElement("button");
 		followers_btn.setAttribute("class", "sub_tablinks");
 		followers_btn.setAttribute("onclick", "openTab(event, 'followers_" + statMap.date + "', 'sub_tablinks', 'sub_tabcontent')");
-		followers_btn.textContent = "New followes";
+		followers_btn.textContent = "New followes (" + getPresNumber(statMap.followers.size) + ")";
 		unfollowers_btn.setAttribute("class", "sub_tablinks");
 		unfollowers_btn.setAttribute("onclick", "openTab(event, 'unfollowers_" + statMap.date + "', 'sub_tablinks', 'sub_tabcontent')");
-		unfollowers_btn.textContent = "New unfollowes";
+		unfollowers_btn.textContent = "New unfollowes (" + getPresNumber(statMap.unfollowers.size) + ")";
 		subTabs.appendChild(followers_btn);
 		subTabs.appendChild(unfollowers_btn);
 		tab.appendChild(subTabs);
