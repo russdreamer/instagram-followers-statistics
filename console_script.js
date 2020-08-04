@@ -16,11 +16,12 @@ let textFile = null;
 	}
 })();
 
-function showError(message) {
-	const error = document.createElement('DIV');
-	error.setAttribute("style", "color: red");
-	error.innerHTML = "Error: " + message;
-	scriptRoot.appendChild(error);
+function showError(error) {
+	const errorDiv = document.createElement('DIV');
+	errorDiv.setAttribute("style", "color: red; font-weight: bold");
+	errorDiv.innerHTML = "Error: " + error.message;
+	root.appendChild(errorDiv);
+	root.appendChild(getRestartBtn());
 }
 
 function User(node) {
@@ -310,7 +311,7 @@ async function getUsers(id, queryHash, selectorName) {
 		const jsonResp = await response.json();
 		resp = (jsonResp.status == "ok")?  jsonResp.data: null;
 
-		if (resp == null) throw 'Can not find followers list.'
+		if (resp == null) throw new Error('Can not find followers list.');
 	addToMap(followers, resp.user[selectorName].edges);
 	hasNext = resp.user[selectorName].page_info.has_next_page;
 	url = "https://www.instagram.com/graphql/query/?query_hash=" + queryHash + "&variables={\"id\":\"" + id + "\",\"include_reel\":true,\"fetch_mutual\":true,\"first\":100,\"after\":\"" + resp.user[selectorName].page_info.end_cursor + "\"}";
@@ -371,7 +372,7 @@ function generateFirstList() {
 		statistics.appendChild(getRestartBtn());
 		content.appendChild(statistics);
 		hideLoader();
-	});
+	}).catch(e => showError(e));
 }
 
 function updateStat(oldStat, followers) {
@@ -428,21 +429,21 @@ async function getQueryHash(pattern) {
 	let resp;
 	const matches = document.body.outerHTML.match(/static\/bundles\/es6\/Consumer\.js\/.+?\.js/g);
 	const scriptLink = (matches != null && matches.length != 0)? matches[0] : null;
-	if (scriptLink == null) throw 'A link of script is not found.';
+	if (scriptLink == null) throw new Error('A link of script is not found.');
 
 	const url = "https://www.instagram.com/" + scriptLink;
 	const response = await fetch(url);
-	if (response.status != 200) throw 'Can not get script file:' + scriptLink;
+	if (response.status != 200) throw new Error('Can not get script file:' + scriptLink);
 	resp = await response.text();
 	let myRegexp = pattern;
 	let match = myRegexp.exec(resp);
-	if (match == null || match.length == 0) throw 'Query hash is not found.';
+	if (match == null || match.length == 0) throw new Error('Query hash is not found.');
 	return match[1];
 }
 
 function getUserId() {
 	const ids = document.body.outerHTML.match(/\"id\":\"([0-9]+?)\"/);
-	if (ids == null || ids.length < 2) throw "User Id is not found.";
+	if (ids == null || ids.length < 2) throw new Error("User Id is not found.");
 	return ids[1];
 }
 
