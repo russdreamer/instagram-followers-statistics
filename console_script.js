@@ -25,10 +25,10 @@ function showError(error) {
 }
 
 function User(node) {
-  this.full_name = node.full_name;
-  this.id = node.id;
-  this.profile_pic_url = node.profile_pic_url;
-  this.username = node.username;
+	this.full_name = node.full_name;
+	this.id = node.id;
+	this.profile_pic_url = node.profile_pic_url;
+	this.username = node.username;
 }
 
 function StatMap(newFollowers, newUnfollowers, date) {
@@ -38,8 +38,8 @@ function StatMap(newFollowers, newUnfollowers, date) {
 }
 
 function Statistics(lastFollowers) {
-  this.lastFollowers = lastFollowers;
-  this.statMaps = [];
+	this.lastFollowers = lastFollowers;
+	this.statMaps = [];
 }
 
 function readSingleFile(e) {
@@ -267,17 +267,17 @@ function makeTable(followersMap, followingsMap) {
 }
 
 function openTab(evt, tabName, linkClassName, contentClassName) {
-  var i, tabcontent, tablinks;
-  tabcontent = document.getElementsByClassName(contentClassName);
-  for (i = 0; i < tabcontent.length; i++) {
-    tabcontent[i].style.display = "none";
-  }
-  tablinks = document.getElementsByClassName(linkClassName);
-  for (i = 0; i < tablinks.length; i++) {
-    tablinks[i].className = tablinks[i].className.replace(" active", "");
-  }
-  document.getElementById(tabName).style.display = "block";
-  evt.currentTarget.className += " active";
+	var i, tabcontent, tablinks;
+	tabcontent = document.getElementsByClassName(contentClassName);
+	for (i = 0; i < tabcontent.length; i++) {
+		tabcontent[i].style.display = "none";
+	}
+	tablinks = document.getElementsByClassName(linkClassName);
+	for (i = 0; i < tablinks.length; i++) {
+		tablinks[i].className = tablinks[i].className.replace(" active", "");
+	}
+	document.getElementById(tabName).style.display = "block";
+	evt.currentTarget.className += " active";
 }
 
 function makeTextFile(object) {
@@ -321,9 +321,9 @@ async function getUsers(id, queryHash, selectorName) {
 
 function addToMap(map, edges) {
 	edges.forEach(element => {
-  	const node = element.node;
-    map.set(node.id, new User(node))
-  });
+  		const node = element.node;
+    	map.set(node.id, new User(node))
+  	});
 }
 
 function restart() {
