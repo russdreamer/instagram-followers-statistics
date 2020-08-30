@@ -31,6 +31,8 @@ class Action {
 	}
 }
 
+window.onerror = (m, s, l, c, error) => showError(error);
+
 (function () {
 	try {
 		createSwitcher();
@@ -812,6 +814,7 @@ function generateNextList(stat) {
 function abortMassAction() {
 	currentAction.isAborted = true;
 	hideLoader();
+	errorDiv.style.display = "none";
 }
 
 function createLoader() {
@@ -860,13 +863,13 @@ async function getQueryHash(pattern, fileName) {
 	resp = await response.text();
 	let myRegexp = pattern;
 	let match = myRegexp.exec(resp);
-	if (match == null || match.length == 0) throw new Error('Query hash is not found.');
+	if (match == null || match.length == 0) throw new Error('Query hash is not found. Make sure you are logged in.');
 	return match[1];
 }
 
 function getUserId() {
 	const ids = document.body.outerHTML.match(/\"id\":\"([0-9]+?)\"/);
-	if (ids == null || ids.length < 2) throw new Error("User Id is not found.");
+	if (ids == null || ids.length < 2) throw new Error("User Id is not found. Make sure you are logged in.");
 	return ids[1];
 }
 
