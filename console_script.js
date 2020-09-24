@@ -58,11 +58,13 @@ function manageSwitcher(switchBtn) {
   		loadCSS();
   		start();
   		switchBtn.textContent = "Close app";
+  		document.addEventListener('keydown', listenKeyPress);
 	} else {
 		document.body.style.display="";
 		root.remove();
 		cssDiv.remove();
 		switchBtn.textContent = "Open app";
+		document.removeEventListener('keydown', listenKeyPress);
 	}
 }
 
@@ -84,7 +86,8 @@ function StatMap(newFollowers, newUnfollowers, date) {
 	this.unfollowers = newUnfollowers;
 }
 
-function Statistics(lastFollowers) {
+function Statistics(lastFollowers, ownerID) {
+	this.ownerID = ownerID;
 	this.lastFollowers = lastFollowers;
 	this.statMaps = [];
 }
@@ -97,7 +100,7 @@ function readSingleFile(e) {
 		var contents = e.target.result;
 		const stat = JSON.parse(contents);
 		stat.lastFollowers = new Map(stat.lastFollowers);
-		generateNextList(stat);
+		generateNextList(stat).catch(e => showError(e));
 	};
 	reader.readAsText(file);
 }
@@ -520,7 +523,7 @@ function getSubActionPanel(actionType) {
 
 	const start_btn = document.createElement('BUTTON');
 	start_btn.setAttribute("class", "button_round");
-	start_btn.addEventListener("click", ()=> doMassAction(actionType));
+	start_btn.addEventListener("click", ()=> doMassAction(actionType).catch(e => showError(e)));
 	start_btn.textContent = "Start";
 
 	const cancel_btn = document.createElement('BUTTON');
@@ -675,16 +678,14 @@ function makeTextFile(object) {
 	return textFile;
 }
 
-function getFollowers(action) {
-	const id = getUserId();
+function getFollowers(action, userID) {
 	const queryHash = getFollowersQueryHash();
-	return queryHash.then(hash => getUsers(id, hash, "edge_followed_by", action));
+	return queryHash.then(hash => getUsers(userID, hash, "edge_followed_by", action));
 }
 
-function getFollowings(action) {
-	const id = getUserId();
+function getFollowings(action, userID) {
  	const queryHash = getFollowingsQueryHash();
- 	return queryHash.then(hash => getUsers(id, hash, "edge_follow", action));
+ 	return queryHash.then(hash => getUsers(userID, hash, "edge_follow", action));
 }
 
 async function getUsers(id, queryHash, selectorName, action) {
@@ -695,6 +696,7 @@ async function getUsers(id, queryHash, selectorName, action) {
 
 	while(hasNext && !action.isAborted) {
 		const response = await fetch(encodeURI(url));
+  		await dynamicSleep(500);
 		const jsonResp = await response.json();
 		resp = (jsonResp.status == "ok")?  jsonResp.data: null;
 
@@ -755,23 +757,28 @@ function showMassActionsPanel() {
 	hideLoader();
 }
   
-function generateFirstList() {
+async function generateFirstList() {
+	showLoader();
+	const username = document.getElementById("username").value;
+	const userId = await getUserId(username);
 	let action = new Action();
 	currentAction = action;
-	showLoader();
-	const followers = getFollowers(action);
-	const followings = getFollowings(action);
+	const followers = getFollowers(action, userId);
+	const followings = getFollowings(action, userId);
 	Promise.all([followers, followings]).then(values => {
 		if (!action.isAborted) {
 			intro.remove();
-			const statistics = showStatisctic(); 
-			statistics.appendChild(getDownloadBtn(new Statistics(values[0])));
+			const statistics = showStatisctic();
+			statistics.appendChild(getDownloadBtn(new Statistics(values[0], userId)));
 			statistics.appendChild(makeTable(...values));
 			statistics.appendChild(getRestartBtn());
 			content.appendChild(statistics);
 			hideLoader(action);
 		}
-	}).catch(e => showError(e));
+	}).catch(e => {
+		showError(e);
+		hideLoader(action);
+	});
 }
 
 function updateStat(oldStat, followers) {
@@ -790,12 +797,18 @@ function updateStat(oldStat, followers) {
 	oldStat.lastFollowers = followers;
 }
 
-function generateNextList(stat) {
+async function generateNextList(stat) {
+	showLoader();
+	const username = document.getElementById("username").value;
+	const userId = await getUserId(username);
 	let action = new Action();
 	currentAction = action;
-	showLoader();
-	const followers = getFollowers(action);
-	const followings = getFollowings(action);
+	if (stat.ownerID != undefined && stat.ownerID != userId) {
+		hideLoader(action);
+		throw new Error('Statistics in file belongs to another account.');
+	}
+	const followers = getFollowers(action, userId);
+	const followings = getFollowings(action, userId);
 	Promise.all([followers, followings]).then(values => {
 		if (!action.isAborted) {
 			updateStat(stat, values[0]);
@@ -808,6 +821,9 @@ function generateNextList(stat) {
 			content.appendChild(statistics);
 			hideLoader(action);
 		}
+	}).catch(e => {
+		showError(e);
+		hideLoader(action);
 	});
 }
 
@@ -867,10 +883,38 @@ async function getQueryHash(pattern, fileName) {
 	return match[1];
 }
 
-function getUserId() {
-	const ids = document.body.outerHTML.match(/\"id\":\"([0-9]+?)\"/);
-	if (ids == null || ids.length < 2) throw new Error("User Id is not found. Make sure you are logged in.");
-	return ids[1];
+async function getUserId(username) {
+	if (username != null && username != "") {
+		const response = await fetch('https://www.instagram.com/' + username, {
+  			method: 'GET',
+  			headers: {
+    			'Content-Type': 'application/text'
+  			}
+		});
+		const html = await response.text();
+		const ids = html.match(/\"id\":\"([0-9]+?)\",\"username\"/);
+		if (ids == null || ids.length < 2) throw new Error("User information is not found. Make sure the given Username exists and the account is public.");
+		return ids[1];
+	} else {
+		return window._sharedData.config.viewerId;
+	}
+}
+
+function listenKeyPress(event) {
+	if (event.keyCode == 86 && event.altKey) {
+		const wrapper = document.getElementById("username_wrapper");
+		if (wrapper == null) return;
+
+		if (wrapper.style.display == "none") {
+			wrapper.style.display = "block";
+		} else {
+			wrapper.style.display = "none";
+		}
+     }
+}
+
+function generateList() {
+	generateFirstList().catch(e => showError(e));
 }
 
 function start() {
@@ -892,7 +936,7 @@ function start() {
 	generate_title.innerHTML = "If it's your first time using this script - press \"Generate statistics\" and save file onto your computer. You could upload this file next time to see what has been changed since that time:";
 	const generate_btn = document.createElement("BUTTON");
 	generate_btn.setAttribute("class", "button_round");
-	generate_btn.addEventListener("click", ()=>generateFirstList());
+	generate_btn.addEventListener("click", async ()=>generateList());
 	generate_btn.textContent = "Generate statistics";
 	const generatedList = document.createElement("DIV");
 	generatedList.setAttribute("id", "generated_list");
@@ -906,6 +950,17 @@ function start() {
 	mass_action_btn.setAttribute("class", "button_round");
 	mass_action_btn.addEventListener("click", ()=>showMassActionsPanel());
 	mass_action_btn.textContent = "Mass following/unfollowing";
+	const usename_wrapper = document.createElement("DIV");
+	usename_wrapper.setAttribute("id", "username_wrapper");
+	usename_wrapper.setAttribute("style", "display:none");
+	const username_title = document.createElement("SPAN");
+	username_title.setAttribute("class", "info");
+	username_title.innerHTML = "Username:";
+	const username_input = document.createElement("INPUT");
+	username_input.setAttribute("type", "text");
+	username_input.setAttribute("id", "username");
+	usename_wrapper.appendChild(username_title);
+	usename_wrapper.appendChild(username_input);
 
 	errorDiv = document.createElement('DIV');
 	errorDiv.setAttribute("style", "display:none;justify-items: center")
@@ -914,6 +969,7 @@ function start() {
 	errorDiv.appendChild(errortitle);
 	errorDiv.appendChild(getRestartBtn());
 
+	intro.appendChild(usename_wrapper);
 	intro.appendChild(generate_title);
 	intro.appendChild(generate_btn);
 	intro.appendChild(generatedList);
@@ -927,7 +983,6 @@ function start() {
 	root.appendChild(errorDiv);
 	const doc = document.documentElement
 	switchDiv.after(root);
-	document.getElementById('file-input')
-	.addEventListener('change', readSingleFile, false);
+	document.getElementById('file-input').addEventListener('change', readSingleFile, false);
 	scriptRoot.appendChild(createLoader());
 }
