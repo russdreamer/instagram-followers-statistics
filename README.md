@@ -19,4 +19,5 @@ There are 4 simple steps:
 <img src="img/scipt_widget2.png" width="70%" />
 
 ## How to use: <br>
-[![Instagram unfollowers script](https://i.ytimg.com/vi/ZW7i3YRlseA/hqdefault.jpg)](https://youtu.be/ZW7i3YRlseA)
+[![Instagram unfollowers script](https://i.ytimg.com/vi/i_B-mWHf-8c/hqdefault.jpg)](https://www.youtube.com/watch?v=i_B-mWHf-8c)<br>
+[![Instagram follow/unfollow script](https://i.ytimg.com/vi/qT39jxX7eyM/hqdefault.jpg)](https://www.youtube.com/watch?v=qT39jxX7eyM)
