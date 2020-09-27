@@ -100,9 +100,18 @@ function readSingleFile(e) {
 		var contents = e.target.result;
 		const stat = JSON.parse(contents);
 		stat.lastFollowers = new Map(stat.lastFollowers);
-		generateNextList(stat).catch(e => showError(e));
+		generateListWithStat(stat);
 	};
 	reader.readAsText(file);
+}
+
+async function generateListWithStat(stat) {
+		let action = new Action();
+		action.quantity = 0;
+		currentAction = action;
+		showLoader();
+		await generateNextList(stat, action).catch(e => showError(e));
+		hideLoader(action);
 }
 
 function loadCSS() {
@@ -318,35 +327,50 @@ async function randomFollowAccounts(action) {
 	}
 }
 
-async function unfollowUnrequitedAccounts(action) {
-	const id = await getUserId();
- 	let queryHash = await getFollowersQueryHash();
- 	let selectorName = "edge_followed_by";
+async function getUnrequitedAccounts(edges) {
+	let delaySleep = 500;
+	let resp = null;
+	let unrequitedAccounts = [];
 
- 	let resp = null;
-	let hasNext = true;
-	const mutualAccountsIds = new Set();
+	for (let user of edges) {
+		dynamicSleep(delaySleep);
+		resp = await fetch("https://www.instagram.com/" + user.node.username);
+		if (resp == null) throw new Error('Can not get followers.');
+		if (!resp.ok) {
+			if (resp.status == 429) {
+				let waitDelay = 5 * 60000;
+				while (resp.status == 429) {
+					await dynamicSleep(waitDelay);
+					waitDelay *= 2;
+					resp = await fetch("https://www.instagram.com/" + user.node.username);
+				}
+				delaySleep *= 2;
+			} else throw new Error('Can not get followers.');
+		}
 
-	while(hasNext && !action.isAborted) {
-		resp = await getFollowUsersBatch(resp, selectorName, queryHash, id);
-		if (resp == null) throw new Error('Can not unfollow accounts.');
-		hasNext = resp.user[selectorName].page_info.has_next_page;
-		resp.user[selectorName].edges
-			.filter(user => user.node.followed_by_viewer || user.node.requested_by_viewer)
-			.forEach(user => {
-				mutualAccountsIds.add(user.node.id);
-			});
+		let html = await resp.text();
+		let regex = new RegExp("\"follows_viewer\":(.*?),", ""); 
+		let matches = html.match(regex);
+		if (matches == null && matches.length < 2) throw new Error('Can not get follower info. Script error.');
+		const follows_viewer = matches[1];
+		if (follows_viewer == "false") unrequitedAccounts.push(user);
 	}
 
-	hasNext = true;
-	resp = null;
-	selectorName = "edge_follow";
+	return unrequitedAccounts;
+}
+
+async function unfollowUnrequitedAccounts(action) {
+	const id = await getUserId();
 	queryHash = await getFollowingsQueryHash();
+	selectorName = "edge_follow";
+	let resp = null;
+	let hasNext = true;
+
 	while(hasNext && action.completed < action.quantity && !action.isAborted) {
 		resp = await getFollowUsersBatch(resp, selectorName, queryHash, id);
 		if (resp == null) throw new Error('Can not unfollow accounts.');
 		hasNext = resp.user[selectorName].page_info.has_next_page;
-		const listToUnfollow = resp.user[selectorName].edges.filter(user => !mutualAccountsIds.has(user.node.id));
+		const listToUnfollow = await getUnrequitedAccounts(resp.user[selectorName].edges);
 		await followUnfollowArray(listToUnfollow, action);
 	}
 }
@@ -693,17 +717,34 @@ async function getUsers(id, queryHash, selectorName, action) {
 	let followers = new Map();
 	let url = "https://www.instagram.com/graphql/query/?query_hash=" + queryHash + "&variables={\"id\":\"" + id + "\",\"include_reel\":true,\"fetch_mutual\":true,\"first\":100}";
 	let hasNext = true;
+	let delaySleep = 200;
+	changeProgressText("0%");
+	let isFirstIterration = true;
 
 	while(hasNext && !action.isAborted) {
-		const response = await fetch(encodeURI(url));
-  		await dynamicSleep(500);
+		let response = await fetch(encodeURI(url));
+		if (!response.ok) {
+			if (response.status == 429) {
+				let waitDelay = 5 * 60000;
+				while (response.status == 429) {
+					await dynamicSleep(waitDelay);
+					waitDelay *= 2;
+					response = await fetch(encodeURI(url));
+				}
+				delaySleep *= 2;
+			} else throw new Error('Can not get whole followers list.');
+		}
 		const jsonResp = await response.json();
 		resp = (jsonResp.status == "ok")?  jsonResp.data: null;
-
 		if (resp == null) throw new Error('Can not find followers list.');
 		addToMap(followers, resp.user[selectorName].edges);
 		hasNext = resp.user[selectorName].page_info.has_next_page;
 		url = "https://www.instagram.com/graphql/query/?query_hash=" + queryHash + "&variables={\"id\":\"" + id + "\",\"include_reel\":true,\"fetch_mutual\":true,\"first\":100,\"after\":\"" + resp.user[selectorName].page_info.end_cursor + "\"}";
+		action.quantity += (isFirstIterration)? resp.user[selectorName].count: 0;
+		action.completed += resp.user[selectorName].edges.length;
+		isFirstIterration = false;
+		changeProgressText(Math.round(action.completed * 100 / action.quantity) + "%");
+  		await dynamicSleep(delaySleep);
 	}
 	return followers;
 }
@@ -757,15 +798,12 @@ function showMassActionsPanel() {
 	hideLoader();
 }
   
-async function generateFirstList() {
-	showLoader();
+async function generateFirstList(action) {
 	const username = document.getElementById("username").value;
 	const userId = await getUserId(username);
-	let action = new Action();
-	currentAction = action;
 	const followers = getFollowers(action, userId);
 	const followings = getFollowings(action, userId);
-	Promise.all([followers, followings]).then(values => {
+	return Promise.all([followers, followings]).then(values => {
 		if (!action.isAborted) {
 			intro.remove();
 			const statistics = showStatisctic();
@@ -773,11 +811,9 @@ async function generateFirstList() {
 			statistics.appendChild(makeTable(...values));
 			statistics.appendChild(getRestartBtn());
 			content.appendChild(statistics);
-			hideLoader(action);
 		}
 	}).catch(e => {
 		showError(e);
-		hideLoader(action);
 	});
 }
 
@@ -797,14 +833,10 @@ function updateStat(oldStat, followers) {
 	oldStat.lastFollowers = followers;
 }
 
-async function generateNextList(stat) {
-	showLoader();
+async function generateNextList(stat, action) {
 	const username = document.getElementById("username").value;
 	const userId = await getUserId(username);
-	let action = new Action();
-	currentAction = action;
 	if (stat.ownerID != undefined && stat.ownerID != userId) {
-		hideLoader(action);
 		throw new Error('Statistics in file belongs to another account.');
 	}
 	const followers = getFollowers(action, userId);
@@ -819,11 +851,9 @@ async function generateNextList(stat) {
 			statistics.appendChild(showFollowersTable(stat));
 			statistics.appendChild(getRestartBtn());
 			content.appendChild(statistics);
-			hideLoader(action);
 		}
 	}).catch(e => {
 		showError(e);
-		hideLoader(action);
 	});
 }
 
@@ -913,8 +943,13 @@ function listenKeyPress(event) {
      }
 }
 
-function generateList() {
-	generateFirstList().catch(e => showError(e));
+async function generateList() {
+	let action = new Action();
+	action.quantity = 0;
+	currentAction = action;
+	showLoader();
+	await generateFirstList(action).catch(e => showError(e));
+	hideLoader(action);
 }
 
 function start() {
