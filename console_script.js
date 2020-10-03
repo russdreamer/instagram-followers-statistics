@@ -490,7 +490,7 @@ function dynamicSleep(ms) {
   	const max = ms / 0.8;
   	const diff = max - min;
 	const time = Math.floor(Math.random() * diff + min);
-  	return new Promise(resolve => setTimeout(resolve, ms));
+  	return new Promise(resolve => setTimeout(resolve, time));
 }
 
 
