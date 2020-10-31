@@ -841,7 +841,7 @@ async function generateNextList(stat, action) {
 	}
 	const followers = getFollowers(action, userId);
 	const followings = getFollowings(action, userId);
-	Promise.all([followers, followings]).then(values => {
+	return Promise.all([followers, followings]).then(values => {
 		if (!action.isAborted) {
 			updateStat(stat, values[0]);
 			intro.remove();
