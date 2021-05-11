@@ -885,11 +885,11 @@ function createLoader() {
 }
 
 function getFollowersQueryHash() {
-	return getQueryHash(/const l=\"(.+)?\",_/g, "Consumer.js")
+	return getQueryHash(/edge_follow.*?\"([0-9,a-z]{32})\"/g, "Consumer.js")
 }
 
 function getFollowingsQueryHash() {
-	return getQueryHash(/,_=\"(.+)?\",L/g, "Consumer.js")
+	return getQueryHash(/edge_follow.*\"([0-9,a-z]{32})\"/g, "Consumer.js")
 }
 
 function getSuggestionQueryHash() {
