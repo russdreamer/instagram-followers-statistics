@@ -885,11 +885,11 @@ function createLoader() {
 }
 
 function getFollowersQueryHash() {
-	return getQueryHash(/const t=\"(.+)?\",n=/g, "Consumer.js")
+	return getQueryHash(/const l=\"(.+)?\",_/g, "Consumer.js")
 }
 
 function getFollowingsQueryHash() {
-	return getQueryHash(/,n=\"(.+)?\",u=/g, "Consumer.js")
+	return getQueryHash(/,_=\"(.+)?\",L/g, "Consumer.js")
 }
 
 function getSuggestionQueryHash() {
