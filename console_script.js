@@ -47,7 +47,8 @@ function createSwitcher() {
 	const switchBtn = document.createElement("BUTTON");
 	switchBtn.setAttribute("style", "background-color: #0095f6;color: white;border-radius: 4px;border-width: 0px;padding: 5px;font-weight: bold;margin: 0;cursor: pointer;");
 	switchBtn.textContent = "Open app";
-	switchBtn.addEventListener('click', () => manageSwitcher(switchBtn));
+	//switchBtn.addEventListener('click', () => manageSwitcher(switchBtn));
+	switchBtn.addEventListener('click', () => alert("Sorry, the script is temporarily not working. Instagram has made big changes and the script also needs some changes to work. It takes time. You can track the progress by the link: https://github.com/russdreamer/instagram-followers-statistics/issues/3"));
 	switchDiv.appendChild(switchBtn);
 	document.documentElement.prepend(switchDiv);
 }
