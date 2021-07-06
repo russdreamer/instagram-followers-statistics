@@ -12,6 +12,7 @@ let isFirstLaunch = true;
 let currentAction;
 let cssDiv;
 let switchDiv;
+let appID;
 
 const actionType = {
     FOLLOW:"FOLLOW",
@@ -47,8 +48,7 @@ function createSwitcher() {
 	const switchBtn = document.createElement("BUTTON");
 	switchBtn.setAttribute("style", "background-color: #0095f6;color: white;border-radius: 4px;border-width: 0px;padding: 5px;font-weight: bold;margin: 0;cursor: pointer;");
 	switchBtn.textContent = "Open app";
-	//switchBtn.addEventListener('click', () => manageSwitcher(switchBtn));
-	switchBtn.addEventListener('click', () => alert("Sorry, the script is temporarily not working. Instagram has made big changes and the script also needs some changes to work. It takes time. You can track the progress by the link: https://github.com/russdreamer/instagram-followers-statistics/issues/3"));
+	switchBtn.addEventListener('click', () => manageSwitcher(switchBtn));
 	switchDiv.appendChild(switchBtn);
 	document.documentElement.prepend(switchDiv);
 }
@@ -76,7 +76,7 @@ function showError(error) {
 
 function User(node) {
 	this.full_name = node.full_name;
-	this.id = node.id;
+	this.id = node.pk;
 	this.profile_pic_url = node.profile_pic_url;
 	this.username = node.username;
 }
@@ -311,6 +311,95 @@ async function doMassAction(actType) {
 	hideLoader(action);
 }
 
+async function getTotalUsersNumber(provided_username) {
+	const followers_num = await getFollowersNumber(provided_username);
+	const following_num = await getFollowingNumber(provided_username);
+	return followers_num + following_num;
+}
+
+async function getFollowersNumber(provided_username) {
+	const username = provided_username? provided_username: getUsername();
+	const response = await fetch('https://www.instagram.com/' + username, {
+  			method: 'GET',
+  			headers: {
+    			'Content-Type': 'application/text'
+  			}
+		});
+
+	const html = await response.text();
+	const count = html.match(/edge_followed_by\":{\"count\":([0-9]+)}/);
+	if (count == null || count.length < 2) throw new Error("Number of followers is not found. Make sure the given Username exists and you are logged in.");
+	return count[1]-0;
+}
+
+async function getFollowingNumber(provided_username) {
+	const username = provided_username? provided_username: getUsername();
+	const response = await fetch('https://www.instagram.com/' + username, {
+  			method: 'GET',
+  			headers: {
+    			'Content-Type': 'application/text'
+  			}
+		});
+
+	const html = await response.text();
+	const count = html.match(/edge_follow\":{\"count\":([0-9]+)}/);
+	if (count == null || count.length < 2) throw new Error("Number of following is not found. Make sure the given Username exists and you are logged in.");
+	return count[1]-0;
+}
+
+async function getFriendshipStatuses(ids) {
+	const body = 'user_ids=' + encodeURIComponent(ids.join());
+	let url = 'https://i.instagram.com/api/v1/friendships/show_many/';
+	const appID = await getAppId(); 
+
+	let response = await fetch(
+		encodeURI(url),
+		{
+			"headers": {
+				"content-type": "application/x-www-form-urlencoded",
+				"x-ig-app-id": appID,
+				"x-ig-www-claim": sessionStorage["www-claim-v2"],
+				'x-csrftoken': window._sharedData.config.csrf_token,
+    			'x-instagram-ajax': window._sharedData.rollout_hash,
+				},
+			"body": body,
+			"method": "POST",
+			"credentials": "include"
+		});
+
+	if (!response.ok) {
+		if (response.status == 429) {
+			let waitDelay = 5 * 60000;
+			while (response.status == 429) {
+				await dynamicSleep(waitDelay);
+				waitDelay *= 2;
+				response = await fetch(
+					encodeURI(url),
+					{
+						"headers": {
+							"x-ig-app-id": appID,
+							"x-ig-www-claim": sessionStorage["www-claim-v2"],
+							'x-csrftoken': window._sharedData.config.csrf_token,
+    						'x-instagram-ajax': window._sharedData.rollout_hash,
+							},
+						"body": body,
+						"method": "POST",
+						"credentials": "include"
+					});
+			}
+			delaySleep *= 2;
+		} else throw new Error('Can not get friendship_statuses list.');
+	}
+
+	let jsonResp = await response.json();
+	jsonResp = jsonResp.status == "ok"?  jsonResp: null;
+	if (jsonResp == null) throw new Error('Can not find friendship_statuses list.');
+	return jsonResp.friendship_statuses;
+}
+
+/**
+ * @deprecated change when instagram updates it's api
+ */
 async function randomFollowAccounts(action) {
 	let queryHash = await getSuggestionQueryHash();
 	let selectorName = "edge_suggested_users";
@@ -320,22 +409,25 @@ async function randomFollowAccounts(action) {
 	const seenIds = [];
 
 	while(hasNext && action.completed < action.quantity && !action.isAborted) {
-		resp = await getSuggestedUsersBatch(queryHash, seenIds);
+		const rest = action.quantity - action.completed;
+		resp = await getSuggestedUsersBatch(queryHash, seenIds, rest);
 		if (resp == null) throw new Error('Can not follow accounts.');
-		hasNext = resp.user[selectorName].page_info.has_next_page;
-		await followUnfollowArray(resp.user[selectorName].edges, action);
-		resp.user[selectorName].edges.forEach(el => seenIds.push(el.node.user.id));
+		const data = resp.data;
+		hasNext = data.user[selectorName].page_info.has_next_page;
+		await followUnfollowArray(data.user[selectorName].edges, action);
+		data.user[selectorName].edges.forEach(el => seenIds.push(el.node.user.id));
 	}
 }
 
-async function getUnrequitedAccounts(edges) {
+async function getUnrequitedAccounts(edges, numberToProceed) {
 	let delaySleep = 500;
 	let resp = null;
 	let unrequitedAccounts = [];
 
 	for (let user of edges) {
+		if (unrequitedAccounts.length >= numberToProceed) break;
 		dynamicSleep(delaySleep);
-		resp = await fetch("https://www.instagram.com/" + user.node.username);
+		resp = await fetch("https://www.instagram.com/" + user.username);
 		if (resp == null) throw new Error('Can not get followers.');
 		if (!resp.ok) {
 			if (resp.status == 429) {
@@ -343,12 +435,11 @@ async function getUnrequitedAccounts(edges) {
 				while (resp.status == 429) {
 					await dynamicSleep(waitDelay);
 					waitDelay *= 2;
-					resp = await fetch("https://www.instagram.com/" + user.node.username);
+					resp = await fetch("https://www.instagram.com/" + user.username);
 				}
 				delaySleep *= 2;
 			} else throw new Error('Can not get followers.');
 		}
-
 		let html = await resp.text();
 		let regex = new RegExp("\"follows_viewer\":(.*?),", ""); 
 		let matches = html.match(regex);
@@ -362,77 +453,91 @@ async function getUnrequitedAccounts(edges) {
 
 async function unfollowUnrequitedAccounts(action) {
 	const id = await getUserId();
-	queryHash = await getFollowingsQueryHash();
-	selectorName = "edge_follow";
+	selectorName = "following";
 	let resp = null;
 	let hasNext = true;
+	let nextMaxId;
 
 	while(hasNext && action.completed < action.quantity && !action.isAborted) {
-		resp = await getFollowUsersBatch(resp, selectorName, queryHash, id);
+		const totalUsersNumber = await getTotalUsersNumber();
+		const rest = action.quantity - action.completed;
+		resp = await getFollowUsersBatch(selectorName, id, totalUsersNumber, nextMaxId);
 		if (resp == null) throw new Error('Can not unfollow accounts.');
-		hasNext = resp.user[selectorName].page_info.has_next_page;
-		const listToUnfollow = await getUnrequitedAccounts(resp.user[selectorName].edges);
+		nextMaxId = resp.next_max_id;
+		hasNext = nextMaxId != undefined;
+		const listToUnfollow = await getUnrequitedAccounts(resp.users, rest);
 		await followUnfollowArray(listToUnfollow, action);
 	}
 }
 
 async function unfollowMutualAccounts(action) {
 	const id = await getUserId();
- 	const queryHash = await getFollowersQueryHash();
- 	let selectorName = "edge_followed_by";
-
+	let selectorName = "followers";
  	let resp = null;
 	let hasNext = true;
-
+	let nextMaxId;
+	
 	while(hasNext && action.completed < action.quantity && !action.isAborted) {
-		resp = await getFollowUsersBatch(resp, selectorName, queryHash, id);
+		const totalUsersNumber = await getTotalUsersNumber();
+		resp = await getFollowUsersBatch(selectorName, id, totalUsersNumber, nextMaxId, 'follow_list_page');
 		if (resp == null) throw new Error('Can not unfollow accounts.');
-		hasNext = resp.user[selectorName].page_info.has_next_page;
-		const listToUnfollow = resp.user[selectorName].edges.filter(user => user.node.followed_by_viewer || user.node.requested_by_viewer);
+		nextMaxId = resp.next_max_id;
+		hasNext = nextMaxId != undefined;
+		const ids = resp.users.map(user => user.pk);
+		const friendshipstatuses = await getFriendshipStatuses(ids);
+		const listToUnfollow = resp.users.filter(user => friendshipstatuses[user.pk] && (friendshipstatuses[user.pk].following));
 		await followUnfollowArray(listToUnfollow, action);
 	}
 }
 
 async function unfollowAllAccounts(action) {
 	const id = await getUserId();
- 	const queryHash = await getFollowingsQueryHash();
- 	let selectorName = "edge_follow";
-
+ 	let selectorName = "following";
  	let resp = null;
 	let hasNext = true;
+	let nextMaxId;
 
 	while(hasNext && action.completed < action.quantity && !action.isAborted) {
-		resp = await getFollowUsersBatch(resp, selectorName, queryHash, id);
+		const rest = action.quantity - action.completed;
+		resp = await getFollowUsersBatch(selectorName, id, rest, nextMaxId);
 		if (resp == null) throw new Error('Can not unfollow accounts.');
-		hasNext = resp.user[selectorName].page_info.has_next_page;
-		await followUnfollowArray(resp.user[selectorName].edges, action);
+		nextMaxId = resp.next_max_id;
+		hasNext = nextMaxId != undefined;
+		await followUnfollowArray(resp.users, action);
 	}
 }
 
-async function getFollowUsersBatch(lastResponse, selectorName, queryHash, id) {
-	let resp;
-	let url;
-
-	if (lastResponse != null) {
-		url = "https://www.instagram.com/graphql/query/?query_hash=" + queryHash + "&variables={\"id\":\"" + id + "\",\"include_reel\":true,\"fetch_mutual\":true,\"first\":100,\"after\":\"" + lastResponse.user[selectorName].page_info.end_cursor + "\"}";
-	} else {
-		url = "https://www.instagram.com/graphql/query/?query_hash=" + queryHash + "&variables={\"id\":\"" + id + "\",\"include_reel\":true,\"fetch_mutual\":true,\"first\":100}";
-	}
-
+async function getFollowUsersBatch(selectorName, id, totalUsersNumber, nextMaxId, search_surface) {
+	const url = `https://i.instagram.com/api/v1/friendships/${id}/${selectorName}/?count=${totalUsersNumber}${nextMaxId? '&max_id=' + nextMaxId: ''}${search_surface? '&search_surface=' + search_surface: ''}`;
 	return await getUsersBatch(url);
 }
 
-async function getSuggestedUsersBatch(queryHash, seenIds) {
-	const url = 'https://www.instagram.com/graphql/query/?query_hash=' + queryHash + '&variables={"fetch_media_count":0,"fetch_suggested_count":30,"ignore_cache":true,"filter_followed_friends":true,"seen_ids":[' + seenIds + '],"include_reel":true}'
+/**
+ * @deprecated change when instagram updates it's api
+ */
+async function getSuggestedUsersBatch(queryHash, seenIds, totalUsersNumber) {
+	const url = 'https://www.instagram.com/graphql/query/?query_hash=' + queryHash + '&variables={"fetch_media_count":0,"fetch_suggested_count":' + totalUsersNumber + ',"ignore_cache":true,"filter_followed_friends":true,"seen_ids":[' + seenIds + '],"include_reel":true}'
 	return await getUsersBatch(url);
 }
 
 async function getUsersBatch(url) {
 	let resp;
-	const response = await fetch(encodeURI(url));
+	const appID = await getAppId();
+
+	const response = await fetch(
+		encodeURI(url),
+		{
+			"headers": {
+				"x-ig-app-id": appID,
+				"x-ig-www-claim": sessionStorage["www-claim-v2"],
+				'x-csrftoken': window._sharedData.config.csrf_token,
+    			'x-instagram-ajax': window._sharedData.rollout_hash,
+				},
+			"method": "GET",
+			"credentials": "include"
+		});
 	const jsonResp = await response.json();
-	resp = (jsonResp.status == "ok")?  jsonResp.data: null;
-	return resp;
+	return jsonResp.status == "ok"? jsonResp: null;
 }
 
 async function followUnfollowArray(users, action) {
@@ -475,12 +580,16 @@ async function followOrUnfollowUser(user, actionName) {
 	if (actionName == "follow") {
 		id = user.user.id
 	} else id = user.id
+	const appID = await getAppId();
 	const res = await fetch('https://www.instagram.com/web/friendships/' + id + '/' + actionName + '/', {
   		method: 'POST',
+		credentials: "include",
   		headers: {
     		'Content-Type': 'application/json',
     		'x-csrftoken': window._sharedData.config.csrf_token,
-    		'x-instagram-ajax': window._sharedData.rollout_hash
+    		'x-instagram-ajax': window._sharedData.rollout_hash,
+			"x-ig-app-id": appID,
+			"x-ig-www-claim": sessionStorage["www-claim-v2"]
   		}
 	});
 	return res;
@@ -704,46 +813,65 @@ function makeTextFile(object) {
 }
 
 function getFollowers(action, userID) {
-	const queryHash = getFollowersQueryHash();
-	return queryHash.then(hash => getUsers(userID, hash, "edge_followed_by", action));
+	return getUsers(userID, "followers", action, 'follow_list_page');
 }
 
 function getFollowings(action, userID) {
- 	const queryHash = getFollowingsQueryHash();
- 	return queryHash.then(hash => getUsers(userID, hash, "edge_follow", action));
+ 	return getUsers(userID, "following", action);
 }
 
-async function getUsers(id, queryHash, selectorName, action) {
-	let resp;
+async function getUsers(id, selectorName, action, search_surface) {
 	let followers = new Map();
-	let url = "https://www.instagram.com/graphql/query/?query_hash=" + queryHash + "&variables={\"id\":\"" + id + "\",\"include_reel\":true,\"fetch_mutual\":true,\"first\":100}";
+	let url = `https://i.instagram.com/api/v1/friendships/${id}/${selectorName}/?count=${action.quantity}${search_surface? '&search_surface=' + search_surface: ''}`;
 	let hasNext = true;
 	let delaySleep = 200;
 	changeProgressText("0%");
-	let isFirstIterration = true;
+	const appID = await getAppId();
 
 	while(hasNext && !action.isAborted) {
-		let response = await fetch(encodeURI(url));
+		let response = await fetch(
+			encodeURI(url),
+			{
+				"headers": {
+					"x-ig-app-id": appID,
+					"x-ig-www-claim": sessionStorage["www-claim-v2"],
+					'x-csrftoken': window._sharedData.config.csrf_token,
+    				'x-instagram-ajax': window._sharedData.rollout_hash,
+					},
+				"method": "GET",
+				"credentials": "include"
+			});
 		if (!response.ok) {
 			if (response.status == 429) {
 				let waitDelay = 5 * 60000;
 				while (response.status == 429) {
 					await dynamicSleep(waitDelay);
 					waitDelay *= 2;
-					response = await fetch(encodeURI(url));
+					response = await fetch(
+						encodeURI(url),
+						{
+							"headers": {
+								"x-ig-app-id": appID,
+								"x-ig-www-claim": sessionStorage["www-claim-v2"],
+								'x-csrftoken': window._sharedData.config.csrf_token,
+    							'x-instagram-ajax': window._sharedData.rollout_hash,
+								},
+							"method": "GET",
+							"credentials": "include"
+						});
 				}
 				delaySleep *= 2;
 			} else throw new Error('Can not get whole followers list.');
 		}
-		const jsonResp = await response.json();
-		resp = (jsonResp.status == "ok")?  jsonResp.data: null;
-		if (resp == null) throw new Error('Can not find followers list.');
-		addToMap(followers, resp.user[selectorName].edges);
-		hasNext = resp.user[selectorName].page_info.has_next_page;
-		url = "https://www.instagram.com/graphql/query/?query_hash=" + queryHash + "&variables={\"id\":\"" + id + "\",\"include_reel\":true,\"fetch_mutual\":true,\"first\":100,\"after\":\"" + resp.user[selectorName].page_info.end_cursor + "\"}";
-		action.quantity += (isFirstIterration)? resp.user[selectorName].count: 0;
-		action.completed += resp.user[selectorName].edges.length;
-		isFirstIterration = false;
+		let jsonResp = await response.json();
+		jsonResp = jsonResp.status == "ok"?  jsonResp: null;
+		if (jsonResp == null) throw new Error('Can not find followers list.');
+		addToMap(followers, jsonResp.users);
+		const nextMaxId = jsonResp.next_max_id;
+		hasNext = nextMaxId != undefined;
+		url = `https://i.instagram.com/api/v1/friendships/${id}/${selectorName}/?count=${action.quantity}&max_id=${nextMaxId}${search_surface? '&search_surface=' + search_surface: ''}`;
+		
+		action.completed += jsonResp.users.length;
 		changeProgressText(Math.round(action.completed * 100 / action.quantity) + "%");
   		await dynamicSleep(delaySleep);
 	}
@@ -752,8 +880,7 @@ async function getUsers(id, queryHash, selectorName, action) {
 
 function addToMap(map, edges) {
 	edges.forEach(element => {
-  		const node = element.node;
-    	map.set(node.id, new User(node))
+    	map.set(element.pk + '', new User(element))
   	});
 }
 
@@ -801,6 +928,7 @@ function showMassActionsPanel() {
   
 async function generateFirstList(action) {
 	const username = document.getElementById("username").value;
+	action.quantity = await getTotalUsersNumber(username);
 	const userId = await getUserId(username);
 	const followers = getFollowers(action, userId);
 	const followings = getFollowings(action, userId);
@@ -836,6 +964,7 @@ function updateStat(oldStat, followers) {
 
 async function generateNextList(stat, action) {
 	const username = document.getElementById("username").value;
+	action.quantity = await getTotalUsersNumber(username);
 	const userId = await getUserId(username);
 	if (stat.ownerID != undefined && stat.ownerID != userId) {
 		throw new Error('Statistics in file belongs to another account.');
@@ -885,18 +1014,51 @@ function createLoader() {
 	return loader_wrapper;
 }
 
-function getFollowersQueryHash() {
-	return getQueryHash(/edge_follow.*?\"([0-9,a-z]{32})\"/g, "Consumer.js")
+async function getAppId() {
+	if (appID != undefined) return appID;
+
+	const js_dir_folder = "ConsumerLibCommons.js";
+	let resp;
+	var regex = new RegExp("static\/bundles\/es6\/" + js_dir_folder + "\/.+?\.js", "g"); 
+	const matches = document.body.outerHTML.match(regex);
+	const scriptLink = (matches != null && matches.length != 0)? matches[0] : null;
+	if (scriptLink == null) throw new Error('A link of script is not found.');
+
+	const url = "https://www.instagram.com/" + scriptLink;
+	const response = await fetch(url);
+	if (response.status != 200) throw new Error('Can not get script file:' + scriptLink);
+	resp = await response.text();
+	let myRegexp = /instagramWebDesktopFBAppId=.([0-9]+)/g;
+	let match = myRegexp.exec(resp);
+	if (match == null || match.length == 0) throw new Error('Application ID is not found. Make sure you are logged in.');
+	return match[1];
 }
 
-function getFollowingsQueryHash() {
-	return getQueryHash(/edge_follow.*\"([0-9,a-z]{32})\"/g, "Consumer.js")
+function getUsername() {
+	return window._sharedData.config.viewer.username
 }
 
-function getSuggestionQueryHash() {
-	return getQueryHash(/SUL_QUERY_ID=\"(.+)?\"/g, "ConsumerLibCommons.js");
+
+async function getUserId(username) {
+	if (username != null && username != "") {
+		const response = await fetch('https://www.instagram.com/' + username, {
+  			method: 'GET',
+  			headers: {
+    			'Content-Type': 'application/text'
+  			}
+		});
+		const html = await response.text();
+		const ids = html.match(/\"id\":\"([0-9]+?)\",\"username\"/);
+		if (ids == null || ids.length < 2) throw new Error("User information is not found. Make sure the given Username exists and the account is public.");
+		return ids[1];
+	} else {
+		return window._sharedData.config.viewerId;
+	}
 }
 
+/**
+ * @deprecated change when instagram updates it's api
+ */
 async function getQueryHash(pattern, fileName) {
 	let resp;
 	var regex = new RegExp("static\/bundles\/es6\/" + fileName + "\/.+?\.js", "g"); 
@@ -914,21 +1076,11 @@ async function getQueryHash(pattern, fileName) {
 	return match[1];
 }
 
-async function getUserId(username) {
-	if (username != null && username != "") {
-		const response = await fetch('https://www.instagram.com/' + username, {
-  			method: 'GET',
-  			headers: {
-    			'Content-Type': 'application/text'
-  			}
-		});
-		const html = await response.text();
-		const ids = html.match(/\"id\":\"([0-9]+?)\",\"username\"/);
-		if (ids == null || ids.length < 2) throw new Error("User information is not found. Make sure the given Username exists and the account is public.");
-		return ids[1];
-	} else {
-		return window._sharedData.config.viewerId;
-	}
+/**
+ * @deprecated change when instagram updates it's api
+ */
+function getSuggestionQueryHash() {
+	return getQueryHash(/SUL_QUERY_ID=\"(.+)?\"/g, "ConsumerLibCommons.js");
 }
 
 function listenKeyPress(event) {
