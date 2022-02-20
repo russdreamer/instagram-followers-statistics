@@ -32,7 +32,7 @@ class Action {
 	}
 }
 
-window.onerror = (m, s, l, c, error) => showError(error);
+window.onerror = (m, s, l, c, error) => showError(m);
 
 (function () {
 	try {
@@ -230,7 +230,9 @@ function hideLoader(action) {
 
 async function changeProgressText(text) {
 	let progress = document.getElementById("progress_number");
-	progress.innerHTML = text;
+	if (progress != null) {
+		progress.innerHTML = text;
+	}
 }
 
 function generateMassActionsPanel() {
@@ -1019,7 +1021,7 @@ async function getAppId() {
 
 	const js_dir_folder = "ConsumerLibCommons.js";
 	let resp;
-	var regex = new RegExp("static\/bundles\/es6\/" + js_dir_folder + "\/.+?\.js", "g"); 
+	var regex = new RegExp("static\/.+?" + js_dir_folder + "\/.+?\.js", "g"); 
 	const matches = document.body.outerHTML.match(regex);
 	const scriptLink = (matches != null && matches.length != 0)? matches[0] : null;
 	if (scriptLink == null) throw new Error('A link of script is not found.');
@@ -1061,7 +1063,7 @@ async function getUserId(username) {
  */
 async function getQueryHash(pattern, fileName) {
 	let resp;
-	var regex = new RegExp("static\/bundles\/es6\/" + fileName + "\/.+?\.js", "g"); 
+	var regex = new RegExp("static\/.+?" + fileName + "\/.+?\.js", "g"); 
 	const matches = document.body.outerHTML.match(regex);
 	const scriptLink = (matches != null && matches.length != 0)? matches[0] : null;
 	if (scriptLink == null) throw new Error('A link of script is not found.');
