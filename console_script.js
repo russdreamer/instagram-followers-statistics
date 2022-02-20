@@ -15,8 +15,7 @@ let currentAction;
 let cssDiv;
 let switchDiv;
 let appID;
-
-const warning_message = `Now you're able to track another users' followers. Check it <a href="https://github.com/russdreamer/instagram-followers-statistics/blob/master/README.md#hidden-functionality-" target="_blank" style="color: white">here!</a>`;
+const warning_message = 'Now you\'re able to track another users\' followers. Check it <a href="https://github.com/russdreamer/instagram-followers-statistics/blob/master/README.md#hidden-functionality-" target="_blank" style="color: white">here!</a>';
 
 const actionType = {
     FOLLOW:"FOLLOW",
