@@ -21,3 +21,6 @@ There are 4 simple steps:
 ## How to use: <br>
 [![Instagram unfollowers script](https://i.ytimg.com/vi/i_B-mWHf-8c/hqdefault.jpg)](https://www.youtube.com/watch?v=i_B-mWHf-8c)<br>
 [![Instagram follow/unfollow script](https://i.ytimg.com/vi/qT39jxX7eyM/hqdefault.jpg)](https://www.youtube.com/watch?v=qT39jxX7eyM)
+
+## Hidden functionality: <br>
+If you'd like to track another user's followers and its user page is open to you, you're able to do that! Just press Alt+V (Option+V on Mac) and you'll see an additional field for the username. Type its username and perform the same tracking actions as you did with your own account 🥳
