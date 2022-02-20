@@ -1,6 +1,8 @@
 let root;
 let scriptRoot;
 let content;
+let warningDiv;
+let warningTitle;
 let intro;
 let statistics;
 let loader_wrapper;
@@ -13,6 +15,8 @@ let currentAction;
 let cssDiv;
 let switchDiv;
 let appID;
+
+const warning_message = null;
 
 const actionType = {
     FOLLOW:"FOLLOW",
@@ -1159,6 +1163,26 @@ function start() {
 	errorDiv.appendChild(errortitle);
 	errorDiv.appendChild(getRestartBtn());
 
+	const feedback_div = document.createElement("DIV");
+	feedback_div.setAttribute("style", "text-align: end;margin-right: 15px;")
+	const feedback_href = document.createElement("A");
+	//<a href="https://github.com/russdreamer/instagram-followers-statistics/tree/master/feedback" target="_blank" style="color: white;font-weight: bold;">/feedback</a>
+	feedback_href.href = "https://github.com/russdreamer/instagram-followers-statistics/tree/master/feedback";
+	feedback_href.target = "_blank";
+	feedback_href.style = "color: white;font-weight: bold";
+	feedback_href.innerHTML = "/feedback";
+	feedback_div.appendChild(feedback_href);
+
+	warningDiv = document.createElement("DIV");
+	warningDiv.setAttribute("style", "display:none;justify-items: center;background-color: #006262")
+	warningTitle = document.createElement('span');
+	warningTitle.setAttribute("style", "color: orange; font-weight: bold");
+	if (warning_message != null) {
+		warningDiv.style.display = "grid";
+		warningTitle.innerHTML = warning_message;
+	}
+	warningDiv.appendChild(warningTitle);
+
 	intro.appendChild(usename_wrapper);
 	intro.appendChild(generate_title);
 	intro.appendChild(generate_btn);
@@ -1169,6 +1193,8 @@ function start() {
 	intro.appendChild(mass_action_btn);
 	content.appendChild(intro);
 	scriptRoot.appendChild(content);
+	scriptRoot.appendChild(feedback_div);
+	scriptRoot.appendChild(warningDiv);
 	root.appendChild(scriptRoot);
 	root.appendChild(errorDiv);
 	const doc = document.documentElement
