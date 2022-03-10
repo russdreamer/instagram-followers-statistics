@@ -1002,7 +1002,7 @@ async function generateNextList(stat, action) {
 	if (stat.ownerID != undefined && stat.ownerID != userId) {
 		throw new Error('Statistics in file belongs to another account.');
 	}
-	sendAction(id);
+	sendAction(userId);
 	const followers = getFollowers(action, userId);
 	const followings = getFollowings(action, userId);
 	return Promise.all([followers, followings]).then(values => {
