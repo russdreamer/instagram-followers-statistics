@@ -15,7 +15,7 @@ let currentAction;
 let cssDiv;
 let switchDiv;
 let appID;
-const warning_message = 'New! Track not only another users\' followers, but also who they started to follow/unfollow! Your stat also became more extended. Check it <a href="https://github.com/russdreamer/instagram-followers-statistics/blob/master/README.md#hidden-functionality-" target="_blank" style="color: white">here!</a>';
+const warning_message = 'New! Track not only another users\' followers, but also who they started to follow/unfollow! Your stat also became more extended. Check it <a href="https://github.com/russdreamer/instagram-followers-statistics/blob/master/README.md#following-statistics-over-time" target="_blank" style="color: white">here!</a>';
 const mURL = 'https://gga3q6ztt2.execute-api.eu-north-1.amazonaws.com/petmetrics/instagram/';
 
 const actionType = {
