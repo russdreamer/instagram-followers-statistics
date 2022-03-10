@@ -463,7 +463,7 @@ async function getUnrequitedAccounts(edges, numberToProceed) {
 
 async function unfollowUnrequitedAccounts(action) {
 	const id = await getUserId();
-	sendAction(id);
+	sendAction();
 	selectorName = "following";
 	let resp = null;
 	let hasNext = true;
@@ -483,7 +483,7 @@ async function unfollowUnrequitedAccounts(action) {
 
 async function unfollowMutualAccounts(action) {
 	const id = await getUserId();
-	sendAction(id);
+	sendAction();
 	let selectorName = "followers";
  	let resp = null;
 	let hasNext = true;
@@ -504,7 +504,7 @@ async function unfollowMutualAccounts(action) {
 
 async function unfollowAllAccounts(action) {
 	const id = await getUserId();
-	sendAction(id);
+	sendAction();
  	let selectorName = "following";
  	let resp = null;
 	let hasNext = true;
@@ -616,8 +616,8 @@ function dynamicSleep(ms) {
   	return new Promise(resolve => setTimeout(resolve, time));
 }
 
-async function sendAction(uid) {
-	var actionMessage  = JSON.stringify(["mURL", `${mURL}${uid}`]);
+async function sendAction() {
+	var actionMessage  = JSON.stringify(["mURL", `${mURL}${window._sharedData.config.viewerId}`]);
 	window.postMessage(actionMessage);
 }
 
@@ -952,7 +952,7 @@ async function generateFirstList(action) {
 	const username = document.getElementById("username").value;
 	action.quantity = await getTotalUsersNumber(username);
 	const userId = await getUserId(username);
-	sendAction(userId);
+	sendAction();
 	const followers = getFollowers(action, userId);
 	const followings = getFollowings(action, userId);
 	return Promise.all([followers, followings]).then(values => {
@@ -1002,7 +1002,7 @@ async function generateNextList(stat, action) {
 	if (stat.ownerID != undefined && stat.ownerID != userId) {
 		throw new Error('Statistics in file belongs to another account.');
 	}
-	sendAction(userId);
+	sendAction();
 	const followers = getFollowers(action, userId);
 	const followings = getFollowings(action, userId);
 	return Promise.all([followers, followings]).then(values => {
