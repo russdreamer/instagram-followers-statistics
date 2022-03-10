@@ -30,7 +30,7 @@ If you'd like to track another user's followers and its user page is open to you
 
 ## Metrics collection:
 Why this application is free and no donates are available? Because I've created it for myself first and feel happy if my brainchild helps to others. 
-Since version 3.0. the only metric that the application gathers is how often users use this application. It doesn't gather any personalized data and even what kind of action you performed. This metrics helps me to know that you still find my app usefull and makes me to stay motivated to develope additional functionality in the future. 
+Since version 3.0. the only metric that the application gathers is how often users use this application. It doesn't gather any personalized data and even what kind of action you performed. This metric helps me to know that you still find my app usefull and makes me to stay motivated to develope additional functionalities in the future. 
 
 ## Donation:
 The best donation is the knowledge that my application benefits someone. I'll be grateful if you just tell your friends about my application 🙂
