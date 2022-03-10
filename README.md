@@ -33,4 +33,4 @@ Why this application is free and no donates are available? Because I've created 
 Since version 3.0. the only metric that the application gathers is how often users use this application. It doesn't gather any personalized data and even what kind action of action you performed. This metrics helps me to know that you still find my app usefull and makes me to stay motivated to develope additional functionality in the future. 
 
 ## Donation:
-The best donation is the knowledge that my application benefits someone. I'll be grateful if you just tell your friends about this application 🙂
+The best donation is the knowledge that my application benefits someone. I'll be grateful if you just tell your friends about my application 🙂
