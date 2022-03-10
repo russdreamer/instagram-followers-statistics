@@ -22,5 +22,15 @@ There are 4 simple steps:
 [![Instagram unfollowers script](https://i.ytimg.com/vi/i_B-mWHf-8c/hqdefault.jpg)](https://www.youtube.com/watch?v=i_B-mWHf-8c)<br>
 [![Instagram follow/unfollow script](https://i.ytimg.com/vi/qT39jxX7eyM/hqdefault.jpg)](https://www.youtube.com/watch?v=qT39jxX7eyM)
 
+## Following statistics over time:
+Since version 3.0. you are able to track also who you started to follow and unfollow. In conjunction with [Hidden functionality](https://github.com/russdreamer/instagram-followers-statistics#hidden-functionality-) you can track also who other users started following/unfollowing.
+
 ## Hidden functionality: <br>
 If you'd like to track another user's followers and its user page is open to you, you're able to do that! Just press Alt+V (Option+V on Mac) and you'll see an additional field for the username. Type its username and perform the same tracking actions as you did with your own account 🥳
+
+## Metrics collection:
+Why this application is free and no donates are available? Because I've created it for myself first and feel happy if my brainchild helps to others. 
+Since version 3.0. the only metric that the application gathers is how often users use this application. It doesn't gather any personalized data and even what kind action of action you performed. This metrics helps me to know that you still find my app usefull and makes me to stay motivated to develope additional functionality in the future. 
+
+## Donation:
+The best donation is the knowledge that my application benefits someone. I'll be grateful if you just tell your friends about this application 🙂
