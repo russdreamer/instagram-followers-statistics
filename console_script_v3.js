@@ -78,6 +78,11 @@ function showError(error) {
 	errortitle.innerHTML = "Error: " + error.message;
 }
 
+function clearError(error) {
+	errorDiv.style.display = "none";
+	errortitle.innerHTML = "";
+}
+
 function User(node) {
 	this.full_name = node.full_name;
 	this.id = node.pk;
@@ -119,7 +124,10 @@ async function generateListWithStat(stat) {
 		action.quantity = 0;
 		currentAction = action;
 		showLoader();
-		await generateNextList(stat, action).catch(e => showError(e));
+		await generateNextList(stat, action).catch(e => {
+			document.getElementById("file-input").value = "";
+			showError(e)
+		});
 		hideLoader(action);
 }
 
@@ -286,7 +294,7 @@ function openActionPanel(actionType) {
 
 function closeActionPanel() {
 	action_panel.remove();
-	errorDiv.style.display = "none";
+	clearError();
 }
 
 function getTitleFromAction(act) {
@@ -302,7 +310,7 @@ async function doMassAction(actType) {
 	const DEFAULT_TIME_SECONDS = 10 * 60000;
 	const DEFAULT_QUANTITY = 0;
 
-	errorDiv.style.display = "none";
+	clearError();
 	let quantity = document.getElementById("quantity").value;
 	let userDelay = document.getElementById("delay").value * 1000;
 	const isAutoReconnect = document.getElementById("autoreconect").checked;
@@ -919,10 +927,11 @@ function getRestartBtn() {
 	return btn;
 }
 
-function getDownloadBtn(stat) {
+function getDownloadBtn(stat, provided_username) {
 	const wrapper = document.createElement("DIV");
 	const link = document.createElement("A");
-	link.setAttribute("download", "followers_" + new Date().toLocaleString("us-US") +".json");
+	const username = provided_username? provided_username: getUsername();
+	link.setAttribute("download", username + "_statistics_" + new Date().toLocaleString("us-US") +".json");
 	link.setAttribute("class", "button_round");
 	link.setAttribute("id", "download_link");
 	link.innerHTML="Download";
@@ -949,6 +958,7 @@ function showMassActionsPanel() {
 }
   
 async function generateFirstList(action) {
+	clearError();
 	const username = document.getElementById("username").value;
 	action.quantity = await getTotalUsersNumber(username);
 	const userId = await getUserId(username);
@@ -959,7 +969,7 @@ async function generateFirstList(action) {
 		if (!action.isAborted) {
 			intro.remove();
 			const statistics = showStatisctic();
-			statistics.appendChild(getDownloadBtn(new Statistics(...values, userId)));
+			statistics.appendChild(getDownloadBtn(new Statistics(...values, userId), username));
 			statistics.appendChild(makeTable(...values));
 			statistics.appendChild(getRestartBtn());
 			content.appendChild(statistics);
@@ -996,12 +1006,15 @@ function updateStat(oldStat, followers, following) {
 }
 
 async function generateNextList(stat, action) {
+	clearError();
 	const username = document.getElementById("username").value;
 	action.quantity = await getTotalUsersNumber(username);
 	const userId = await getUserId(username);
 	if (stat.ownerID != undefined && stat.ownerID != userId) {
+
 		throw new Error('Statistics in file belongs to another account.');
 	}
+	stat.ownerID = userId;
 	sendAction();
 	const followers = getFollowers(action, userId);
 	const followings = getFollowings(action, userId);
@@ -1010,7 +1023,7 @@ async function generateNextList(stat, action) {
 			updateStat(stat, ...values);
 			intro.remove();
 			const statistics = showStatisctic(); 
-			statistics.appendChild(getDownloadBtn(stat));
+			statistics.appendChild(getDownloadBtn(stat, username));
 			statistics.appendChild(makeTable(...values));
 			statistics.appendChild(showStatTable(stat, "followers", "Followers statistics over time:"));
 			statistics.appendChild(showStatTable(stat, "following", "Following statistics over time:"));
@@ -1025,7 +1038,7 @@ async function generateNextList(stat, action) {
 function abortMassAction() {
 	currentAction.isAborted = true;
 	hideLoader();
-	errorDiv.style.display = "none";
+	clearError();
 }
 
 function createLoader() {
