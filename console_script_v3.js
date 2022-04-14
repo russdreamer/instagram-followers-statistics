@@ -17,6 +17,9 @@ let switchDiv;
 let appID;
 const warning_message = 'New! Track not only another users\' followers, but also who they started to follow/unfollow! Your stat also became more extended. Check it <a href="https://github.com/russdreamer/instagram-followers-statistics/blob/master/README.md#following-statistics-over-time" target="_blank" style="color: white">here!</a>';
 const mURL = 'https://gga3q6ztt2.execute-api.eu-north-1.amazonaws.com/petmetrics/instagram/';
+const escapeHTMLPolicy = trustedTypes.createPolicy("escapePolicy", {
+  createHTML: (html) => html
+});
 
 const actionType = {
     FOLLOW:"FOLLOW",
@@ -73,14 +76,18 @@ function manageSwitcher(switchBtn) {
 	}
 }
 
+function innerHTML(text) {
+	return escapeHTMLPolicy.createHTML(text);
+}
+
 function showError(error) {
 	errorDiv.style.display = "grid";
-	errortitle.innerHTML = "Error: " + error.message;
+	errortitle.innerHTML = innerHTML("Error: " + error.message);
 }
 
 function clearError(error) {
 	errorDiv.style.display = "none";
-	errortitle.innerHTML = "";
+	errortitle.innerHTML = innerHTML("");
 }
 
 function User(node) {
@@ -134,7 +141,7 @@ async function generateListWithStat(stat) {
 function loadCSS() {
 	cssDiv = document.createElement('STYLE');
 	const css = '#root {display: flex;align-items: center;} #content {padding: 20px}#script_root {background: teal;overflow: hidden;border-radius: 25px;border: 2px solid #35c7ac;width: fit-content;max-width: 70vw;height: fit-content;}.button_round {width: fit-content;margin-top:10px;margin-bottom: 20px;box-shadow: 3px 4px 0px 0px #899599;background:linear-gradient(to bottom, #ededed 5%, #bab1ba 100%);background-color:#ededed;border-radius:15px;border:1px solid #d6bcd6;display:inline-block;cursor:pointer;color:#0b4c5c;font-family:Arial;font-size:17px;padding:7px 25px;text-decoration:none;text-shadow:0px 1px 0px #e1e2ed;}.button_round:hover {background:linear-gradient(to bottom, #bab1ba 5%, #ededed 100%);background-color:#bab1ba;}.button_round:active {position:relative;top:1px;}.tab {overflow-x: auto;white-space: nowrap;display: block;border: 1px solid #ccc;background-color: #f1f1f1;}.tab button {background-color: inherit;border: none;outline: none;cursor: pointer;padding: 14px 16px;transition: 0.3s;font-size: 17px;}.tab button:hover {background-color: #ddd;}.tab button.active {background-color: #ccc;}.tabcontent {background: white;overflow-y: scroll;max-height: 500px;display: none;padding: 6px 12px;border: 1px solid #ccc;border-top: none;}.sub_tabcontent {background: white;overflow-y: scroll;max-height: 500px;display: none;padding: 6px 12px;border: 1px solid #ccc;border-top: none;}.avatar {width: 60px;float:left}.user_content {display:table;padding:10px;font-size:15pt}.username {color: darkcyan}.user_row {width: fit-content; margin-top: 10px;display: block; cursor: pointer}.info {color: white;padding-top: 30px;font-weight: bold;font-size: 15pt;}.table_content {border-radius: 25px;overflow: hidden;width:fit-content;max-width:100%; margin-top:10px;}.load_container{display:none; position: absolute;align-items: center;justify-content: center;height: 100%;width: 100%;background-color: rgba(0, 0, 0, 0.8)}.loader {border: 16px solid #f3f3f3;border-radius: 50%;border-top: 16px solid #3498db;width: 120px;height: 120px;-webkit-animation: spin 2s linear infinite; /* Safari */animation: spin 1s linear infinite;}@-webkit-keyframes spin {0% { -webkit-transform: rotate(0deg); }100% { -webkit-transform: rotate(360deg); }}@keyframes spin {0% { transform: rotate(0deg); }100% { transform: rotate(360deg);}} .action_panel {position: absolute;overflow-y: scroll;align-self: center;background: teal;width: 100%;height: 100%} .progress_number{color: white;position: absolute;font-weight: bold;}.tooltip {position: relative;display: inline-block;border-bottom: 1px dotted black;}.tooltip .tooltiptext {visibility: hidden;width: 200px;background-color: #555;color: #fff;text-align: center;border-radius: 6px;padding: 5px 0;position: absolute;z-index: 1;bottom: 125%;left: 50%;margin-left: -60px;opacity: 0;transition: opacity 0.3s;}.tooltip .tooltiptext::after {content: "";position: absolute;top: 100%;left: 50%;margin-left: -5px;border-width: 5px;border-style: solid;border-color: #555 transparent transparent transparent;}.tooltip:hover .tooltiptext {visibility: visible;opacity: 1;}';
-	cssDiv.innerHTML = css;
+	cssDiv.innerHTML = innerHTML(css);
 	document.head.appendChild(cssDiv);
 }
 
@@ -181,7 +188,7 @@ function usersMapToHTML(usersMap) {
 	const wrapDiv = document.createElement('DIV');
 
 	if (usersMap.size == 0) {
-		wrapDiv.innerHTML = "Nobody during this period";
+		wrapDiv.innerHTML = innerHTML("Nobody during this period");
 	}
 
 	usersMap.forEach((value, key) => {
@@ -196,7 +203,7 @@ function usersMapToHTML(usersMap) {
 		userDiv.appendChild(avatar);
 		const userContent = document.createElement('DIV');
 		userContent.setAttribute("class", "user_content");
-		userContent.innerHTML = '<b>' + user.full_name + '</b><br><span class="username">' + user.username + "</span>";
+		userContent.innerHTML = innerHTML('<b>' + user.full_name + '</b><br><span class="username">' + user.username + "</span>");
 		userDiv.appendChild(userContent);
 		wrapDiv.appendChild(userDiv);
 	});
@@ -247,7 +254,7 @@ function hideLoader(action) {
 async function changeProgressText(text) {
 	let progress = document.getElementById("progress_number");
 	if (progress != null) {
-		progress.innerHTML = text;
+		progress.innerHTML = innerHTML(text);
 	}
 }
 
@@ -636,7 +643,7 @@ function getSubActionPanel(actionType) {
 	const title = document.createElement('SPAN');
 	title.setAttribute("class", "info");
 	title.setAttribute("style", "text-decoration: underline");
-	title.innerHTML = getTitleFromAction(actionType);
+	title.innerHTML = innerHTML(getTitleFromAction(actionType));
 
 	sub_panel.setAttribute("class", "action_panel");
 	const wrapper = document.createElement('DIV');
@@ -646,7 +653,7 @@ function getSubActionPanel(actionType) {
 	quantity_label.setAttribute("for", "quantity");
 	quantity_label.setAttribute("class", "info");
 	quantity_label.setAttribute("style", "text-align:center");
-	quantity_label.innerHTML = "Quantity of Accounts:";
+	quantity_label.innerHTML = innerHTML("Quantity of Accounts:");
 	const quantity_input = document.createElement('INPUT');
 	quantity_input.setAttribute("type", "number");
 	quantity_input.setAttribute("id", "quantity");
@@ -662,10 +669,10 @@ function getSubActionPanel(actionType) {
 	checkboxLabel = document.createElement('LABEL');
 	checkboxLabel.setAttribute("for", "autoreconect");
 	checkboxLabel.setAttribute("class", "info");
-	checkboxLabel.innerHTML = "auto reconnect";
+	checkboxLabel.innerHTML = innerHTML("auto reconnect");
 	const tooltipText = document.createElement('SPAN');
 	tooltipText.setAttribute("class", "tooltiptext");
-	tooltipText.innerHTML = "If it's enabled, every time when Instagram blocks your action, script will wait and try again with increased delay";
+	tooltipText.innerHTML = innerHTML("If it's enabled, every time when Instagram blocks your action, script will wait and try again with increased delay");
 	tooltip.appendChild(checkboxLabel);
 	tooltip.appendChild(tooltipText);
 	checkBoxWrapper.appendChild(checkbox);
@@ -674,7 +681,7 @@ function getSubActionPanel(actionType) {
 	const delay_label = document.createElement('LABEL');
 	delay_label.setAttribute("for", "delay");
 	delay_label.setAttribute("style", "text-align:center");
-	delay_label.innerHTML = "Delay (sec):";
+	delay_label.innerHTML = innerHTML("Delay (sec):");
 	delay_label.setAttribute("class", "info");
 	const delay_input = document.createElement('INPUT');
 	delay_input.setAttribute("type", "number");
@@ -716,7 +723,7 @@ function showStatTable(stat, tableName, title) {
 
 	const label = document.createElement("SPAN");
 	label.setAttribute("class", "info");
-	label.innerHTML = title;
+	label.innerHTML = innerHTML(title);
 	wrapper.appendChild(label);
 	const wrapDiv = document.createElement('DIV');
 	wrapDiv.setAttribute("class", "table_content");
@@ -923,7 +930,7 @@ function getRestartBtn() {
 	const btn = document.createElement("BUTTON");
 	btn.setAttribute("class", "button_round");
 	btn.addEventListener("click", ()=> restart());
-	btn.innerHTML = "Back to main menu";
+	btn.innerHTML = innerHTML("Back to main menu");
 	return btn;
 }
 
@@ -934,11 +941,11 @@ function getDownloadBtn(stat, provided_username) {
 	link.setAttribute("download", username + "_statistics_" + new Date().toLocaleString("us-US") +".json");
 	link.setAttribute("class", "button_round");
 	link.setAttribute("id", "download_link");
-	link.innerHTML="Download";
+	link.innerHTML = innerHTML("Download");
 	link.href = makeTextFile(stat);
 	const label = document.createElement("SPAN");
 	label.setAttribute("class", "info");
-	label.innerHTML = "Download last statistics to use it next time to compare who unfollow/follow you:";
+	label.innerHTML = innerHTML("Download last statistics to use it next time to compare who unfollow/follow you:");
 	wrapper.appendChild(label);
 	wrapper.appendChild(link);
 	return wrapper;
@@ -1169,7 +1176,7 @@ function start() {
 	input.setAttribute("class", "button_round");
 	const generate_title = document.createElement("SPAN");
 	generate_title.setAttribute("class", "info");
-	generate_title.innerHTML = "If it's your first time using this script - press \"Generate statistics\" and save file onto your computer. You could upload this file next time to see what has been changed since that time:";
+	generate_title.innerHTML = innerHTML("If it's your first time using this script - press \"Generate statistics\" and save file onto your computer. You could upload this file next time to see what has been changed since that time:");
 	const generate_btn = document.createElement("BUTTON");
 	generate_btn.setAttribute("class", "button_round");
 	generate_btn.addEventListener("click", async () => generateList());
@@ -1178,10 +1185,10 @@ function start() {
 	generatedList.setAttribute("id", "generated_list");
 	const upload_title =  document.createElement("SPAN");
 	upload_title.setAttribute("class", "info");
-	upload_title.innerHTML = "If you have already got a previously downloaded file - upload it here and check who has started to follow/unfollow you since that time:";
+	upload_title.innerHTML = innerHTML("If you have already got a previously downloaded file - upload it here and check who has started to follow/unfollow you since that time:");
 	const mass_action_title = document.createElement("SPAN");
 	mass_action_title.setAttribute("class", "info");
-	mass_action_title.innerHTML = "If you need mass following or unfollowing accounts, you can do it with a function below:";
+	mass_action_title.innerHTML = innerHTML("If you need mass following or unfollowing accounts, you can do it with a function below:");
 	const mass_action_btn = document.createElement("BUTTON");
 	mass_action_btn.setAttribute("class", "button_round");
 	mass_action_btn.addEventListener("click", ()=>showMassActionsPanel());
@@ -1191,7 +1198,7 @@ function start() {
 	usename_wrapper.setAttribute("style", "display:none");
 	const username_title = document.createElement("SPAN");
 	username_title.setAttribute("class", "info");
-	username_title.innerHTML = "Username:";
+	username_title.innerHTML = innerHTML("Username:");
 	const username_input = document.createElement("INPUT");
 	username_input.setAttribute("type", "text");
 	username_input.setAttribute("id", "username");
@@ -1211,7 +1218,7 @@ function start() {
 	feedback_href.href = "https://github.com/russdreamer/instagram-followers-statistics/tree/master/feedback";
 	feedback_href.target = "_blank";
 	feedback_href.style = "color: white;font-weight: bold";
-	feedback_href.innerHTML = "/feedback";
+	feedback_href.innerHTML = innerHTML("/feedback");
 	feedback_div.appendChild(feedback_href);
 
 	warningDiv = document.createElement("DIV");
@@ -1220,7 +1227,7 @@ function start() {
 	warningTitle.setAttribute("style", "color: orange; font-weight: bold");
 	if (warning_message != null) {
 		warningDiv.style.display = "grid";
-		warningTitle.innerHTML = warning_message;
+		warningTitle.innerHTML = innerHTML(warning_message);
 	}
 	warningDiv.appendChild(warningTitle);
 
