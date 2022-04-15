@@ -1077,7 +1077,15 @@ async function getAppId() {
 	var regex = new RegExp("static\/.+?" + js_dir_folder + "\/.+?\.js", "g"); 
 	const matches = document.body.outerHTML.match(regex);
 	const scriptLink = (matches != null && matches.length != 0)? matches[0] : null;
-	if (scriptLink == null) throw new Error('A link of script is not found.');
+	if (scriptLink == null) {
+		index_regex = /appId.{0,3}?([0-9]+)/g;
+		const index_matches = index_regex.exec(document.body.outerHTML);
+		if (index_matches == null || index_matches.length == 0) {
+			throw new Error('A link of script is not found.');
+		} else {
+			return index_matches[1];
+		}
+	} 
 
 	const url = "https://www.instagram.com/" + scriptLink;
 	const response = await fetch(url);
