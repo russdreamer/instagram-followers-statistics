@@ -8,7 +8,7 @@ let statistics;
 let loader_wrapper;
 let action_panel;
 let errorDiv;
-let	errortitle;
+let errortitle;
 let textFile = null;
 let isFirstLaunch = true;
 let currentAction;
@@ -962,6 +962,7 @@ function getRestartBtn() {
 
 function getDownloadBtn(stat, provided_username) {
 	const wrapper = document.createElement("DIV");
+	wrapper.setAttribute("class", "flex-column");
 	const link = document.createElement("A");
 	const username = provided_username? provided_username: getUsername();
 	link.setAttribute("download", username + "_statistics_" + new Date().toLocaleString("us-US") +".json");
@@ -979,6 +980,7 @@ function getDownloadBtn(stat, provided_username) {
 
 function showStatisctic() {
 	statistics = document.createElement("DIV");
+	statistics.setAttribute("class", "flex-column");
 	return statistics;
 }
 
