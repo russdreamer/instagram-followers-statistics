@@ -20,7 +20,7 @@
     'use strict';
     GM_xmlhttpRequest ( {
         method:     'GET',
-        url:        "https://raw.githubusercontent.com/russdreamer/instagram-followers-statistics/master/console_script_v3.js",
+        url:        "https://raw.githubusercontent.com/russdreamer/instagram-followers-statistics/master/console_script_v4.js",
         onload:     function (responseDetails) {
             loadScript(responseDetails.responseText);
             window.addEventListener("message", receiveAction, false);
