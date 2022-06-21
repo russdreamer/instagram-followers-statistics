@@ -1139,7 +1139,7 @@ async function getUserId(username) {
   			}
 		});
 		const html = await response.text();
-		const ids = html.match(/\"id\":\"([0-9]+?)\",\"username\"/);
+		const ids = html.match(/params.+\"profile_id\":\"([0-9]+?)\"/);
 		if (ids == null || ids.length < 2) throw new Error("User information is not found. Make sure the given Username exists and the account is public.");
 		return ids[1];
 	} else {
