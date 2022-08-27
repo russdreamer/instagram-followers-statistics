@@ -15,7 +15,7 @@ let currentAction;
 let cssDiv;
 let switchDiv;
 let appID;
-const warning_message = 'New! Track not only another users\' followers, but also who they started to follow/unfollow! Your stat also became more extended. Check it <a href="https://github.com/russdreamer/instagram-followers-statistics/blob/master/README.md#following-statistics-over-time" target="_blank" style="color: white">here!</a>';
+const warning_message = 'Functionality to Follow random users is BACK! You\'ll follow relevant and recommended accounts based on Instagram suggestions!' ;
 const mURL = 'https://gga3q6ztt2.execute-api.eu-north-1.amazonaws.com/petmetrics/instagram/';
 const escapeHTMLPolicy = trustedTypes.createPolicy("escapePolicy", {
   createHTML: (html) => html
@@ -284,7 +284,7 @@ function generateMassActionsPanel() {
   mutual_unfollow_btn.addEventListener("click", ()=> openActionPanel(actionType.UNFOLLOW_MUTUAL));
   mutual_unfollow_btn.textContent = "Unfollow accounts that you mutually follow...";
 
-  //panel.appendChild(follow_btn);
+  panel.appendChild(follow_btn);
   panel.appendChild(all_unfollow_btn);
   panel.appendChild(unrequited_unfollow_btn);
   panel.appendChild(mutual_unfollow_btn);
@@ -439,25 +439,24 @@ async function getFriendshipStatuses(ids) {
   return jsonResp.friendship_statuses;
 }
 
-/**
- * @deprecated change when instagram updates it's api
- */
 async function randomFollowAccounts(action) {
-  let queryHash = await getSuggestionQueryHash();
-  let selectorName = "edge_suggested_users";
+  const id = await getUserId();
+  sendAction();
 
   let resp = null;
   let hasNext = true;
-  const seenIds = [];
+  let seenIds = [];
 
   while(hasNext && action.completed < action.quantity && !action.isAborted) {
     const rest = action.quantity - action.completed;
-    resp = await getSuggestedUsersBatch(queryHash, seenIds, rest);
+    resp = await getSuggestedUsersBatch(seenIds, rest);
     if (resp == null) throw new Error('Can not follow accounts.');
-    const data = resp.data;
-    hasNext = data.user[selectorName].page_info.has_next_page;
-    await followUnfollowArray(data.user[selectorName].edges, action);
-    data.user[selectorName].edges.forEach(el => seenIds.push(el.user.pk));
+    seenIds = resp.max_id;
+    hasNext = resp.groups.length > 0 && resp.groups[0].items.length > 0;
+    if (hasNext) {
+      const listTofollow = resp.groups[0].items.map(it => it.user);
+      await followUnfollowArray(listTofollow, action);
+    }
   }
 }
 
@@ -538,15 +537,14 @@ async function getFollowUsersBatch(selectorName, id, totalUsersNumber, nextMaxId
   return await getUsersBatch(url);
 }
 
-/**
- * @deprecated change when instagram updates it's api
- */
-async function getSuggestedUsersBatch(queryHash, seenIds, totalUsersNumber) {
-  const url = 'https://www.instagram.com/graphql/query/?query_hash=' + queryHash + '&variables={"fetch_media_count":0,"fetch_suggested_count":' + totalUsersNumber + ',"ignore_cache":true,"filter_followed_friends":true,"seen_ids":[' + seenIds + '],"include_reel":true}'
-  return await getUsersBatch(url);
+
+async function getSuggestedUsersBatch(seenIds, totalUsersNumber) {
+  const url = 'https://i.instagram.com/api/v1/discover/ayml/';
+  const body = `max_id=${encodeURI(seenIds)}&max_number_to_display=${totalUsersNumber}&module=discover_people&paginate=true`
+  return await getUsersBatch(url, body);
 }
 
-async function getUsersBatch(url) {
+async function getUsersBatch(url, body) {
   let resp;
   const appID = await getAppId();
 
@@ -554,12 +552,14 @@ async function getUsersBatch(url) {
     encodeURI(url),
     {
       "headers": {
+        "content-type": "application/x-www-form-urlencoded",
         "x-ig-app-id": appID,
         "x-ig-www-claim": sessionStorage["www-claim-v2"],
         'x-csrftoken': window._sharedData.config.csrf_token,
           'x-instagram-ajax': window._sharedData.rollout_hash,
         },
-      "method": "GET",
+      "body": body,
+      "method": body? "POST" : "GET",
       "credentials": "include"
     });
   const jsonResp = await response.json();
@@ -602,10 +602,7 @@ async function followUnfollowArray(users, action) {
 }
 
 async function followOrUnfollowUser(user, actionName) {
-  let id;
-  if (actionName == "follow") {
-    id = user.user.pk;
-  } else id = user.pk;
+  const id = user.pk;
 
   const appID = await getAppId();
   const res = await fetch('https://www.instagram.com/web/friendships/' + id + '/' + actionName + '/', {
@@ -1122,33 +1119,6 @@ async function getUserId(username) {
   } else {
     return window._sharedData.config.viewerId;
   }
-}
-
-/**
- * @deprecated change when instagram updates it's api
- */
-async function getQueryHash(pattern, fileName) {
-  let resp;
-  var regex = new RegExp("static\/.+?" + fileName + "\/.+?\.js", "g"); 
-  const matches = document.body.outerHTML.match(regex);
-  const scriptLink = (matches != null && matches.length != 0)? matches[0] : null;
-  if (scriptLink == null) throw new Error('A link of script is not found.');
-
-  const url = "https://www.instagram.com/" + scriptLink;
-  const response = await fetch(url);
-  if (response.status != 200) throw new Error('Can not get script file:' + scriptLink);
-  resp = await response.text();
-  let myRegexp = pattern;
-  let match = myRegexp.exec(resp);
-  if (match == null || match.length == 0) throw new Error('Query hash is not found. Make sure you are logged in.');
-  return match[1];
-}
-
-/**
- * @deprecated change when instagram updates it's api
- */
-function getSuggestionQueryHash() {
-  return getQueryHash(/SUL_QUERY_ID=\"(.+)?\"/g, "ConsumerLibCommons.js");
 }
 
 function listenKeyPress(event) {
