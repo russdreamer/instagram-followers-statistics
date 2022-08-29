@@ -450,7 +450,10 @@ async function randomFollowAccounts(action) {
   while(hasNext && action.completed < action.quantity && !action.isAborted) {
     const rest = action.quantity - action.completed;
     resp = await getSuggestedUsersBatch(seenIds, rest);
-    if (resp == null) throw new Error('Can not follow accounts.');
+    if (resp == null) {
+      hideLoader(action);
+      throw new Error('Cannot follow accounts.');
+    }
     seenIds = resp.max_id;
     hasNext = resp.groups.length > 0 && resp.groups[0].items.length > 0;
     if (hasNext) {
@@ -485,7 +488,10 @@ async function unfollowUnrequitedAccounts(action) {
     const totalUsersNumber = await getTotalUsersNumber();
     const rest = action.quantity - action.completed;
     resp = await getFollowUsersBatch(selectorName, id, totalUsersNumber, nextMaxId);
-    if (resp == null) throw new Error('Can not unfollow accounts.');
+    if (resp == null) {
+      hideLoader(action);
+      throw new Error('Can not unfollow accounts.');
+    }
     nextMaxId = resp.next_max_id;
     hasNext = nextMaxId != undefined;
     const listToUnfollow = await getUnrequitedAccounts(resp.users, rest);
@@ -504,7 +510,10 @@ async function unfollowMutualAccounts(action) {
   while(hasNext && action.completed < action.quantity && !action.isAborted) {
     const totalUsersNumber = await getTotalUsersNumber();
     resp = await getFollowUsersBatch(selectorName, id, totalUsersNumber, nextMaxId, 'follow_list_page');
-    if (resp == null) throw new Error('Can not unfollow accounts.');
+    if (resp == null) {
+      hideLoader(action);
+      throw new Error('Can not unfollow accounts.');
+    }
     nextMaxId = resp.next_max_id;
     hasNext = nextMaxId != undefined;
     const ids = resp.users.map(user => user.pk);
@@ -525,7 +534,10 @@ async function unfollowAllAccounts(action) {
   while(hasNext && action.completed < action.quantity && !action.isAborted) {
     const rest = action.quantity - action.completed;
     resp = await getFollowUsersBatch(selectorName, id, rest, nextMaxId);
-    if (resp == null) throw new Error('Can not unfollow accounts.');
+    if (resp == null) {
+      hideLoader(action);
+      throw new Error('Can not unfollow accounts.');
+    }
     nextMaxId = resp.next_max_id;
     hasNext = nextMaxId != undefined;
     await followUnfollowArray(resp.users, action);
@@ -563,6 +575,12 @@ async function getUsersBatch(url, body) {
       "credentials": "include"
     });
   const jsonResp = await response.json();
+  if (jsonResp.status == "ok") {
+    return jsonResp;
+  } else {
+    console.error(jsonResp);
+    return null;
+  }
   return jsonResp.status == "ok"? jsonResp: null;
 }
 
