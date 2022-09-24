@@ -17,9 +17,9 @@ let switchDiv;
 let appID;
 const warning_message = 'Functionality to Follow random users is BACK! You\'ll follow relevant and recommended accounts based on Instagram suggestions!' ;
 const mURL = 'https://gga3q6ztt2.execute-api.eu-north-1.amazonaws.com/petmetrics/instagram/';
-const escapeHTMLPolicy = trustedTypes.createPolicy("escapePolicy", {
-  createHTML: (html) => html
-});
+const escapeHTMLPolicy = typeof trustedTypes !== 'undefined'? trustedTypes.createPolicy("escapePolicy", {
+    createHTML: (html) => html
+  }) : null;
 
 const actionType = {
     FOLLOW:"FOLLOW",
@@ -77,7 +77,7 @@ function manageSwitcher(switchBtn) {
 }
 
 function innerHTML(text) {
-  return escapeHTMLPolicy.createHTML(text);
+  return escapeHTMLPolicy !== null? escapeHTMLPolicy.createHTML(text) : text;
 }
 
 function showError(error) {
