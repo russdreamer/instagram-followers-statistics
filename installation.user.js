@@ -8,7 +8,7 @@
 // @updateURL    https://github.com/russdreamer/instagram-followers-statistics/raw/master/installation.user.js
 // @downloadURL  https://github.com/russdreamer/instagram-followers-statistics/raw/master/installation.user.js
 // @supportURL   https://github.com/russdreamer/instagram-followers-statistics/issues
-// @include      https://www.instagram.com/*
+// @match      https://www.instagram.com/*
 // @grant        GM_xmlhttpRequest
 // @connect      raw.githubusercontent.com
 // @connect      github.com
