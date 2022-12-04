@@ -51,7 +51,7 @@ window.onerror = (m, s, l, c, error) => showError(m);
 
 function createSwitcher() {
   switchDiv = document.createElement("DIV");
-  switchDiv.setAttribute("style", "position: fixed;z-index: 5;margin-top: 54px;");
+  switchDiv.setAttribute("style", "position: fixed;z-index: 5;");
   const switchBtn = document.createElement("BUTTON");
   switchBtn.setAttribute("style", "background-color: #0095f6;color: white;border-radius: 4px;border-width: 0px;padding: 5px;font-weight: bold;margin: 0;cursor: pointer;");
   switchBtn.textContent = "Open app";
