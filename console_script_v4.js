@@ -15,7 +15,7 @@ let currentAction;
 let cssDiv;
 let switchDiv;
 let appID;
-const warning_message = 'Functionality to Follow random users is BACK! You\'ll follow relevant and recommended accounts based on Instagram suggestions!' ;
+const warning_message = 'Generating another user\'s statistics might not work due to <a href="https://github.com/russdreamer/instagram-followers-statistics/issues/14" target="_blank">instagram bug</a>' ;
 const mURL = 'https://gga3q6ztt2.execute-api.eu-north-1.amazonaws.com/petmetrics/instagram/';
 const escapeHTMLPolicy = typeof trustedTypes !== 'undefined'? trustedTypes.createPolicy("escapePolicy", {
     createHTML: (html) => html
