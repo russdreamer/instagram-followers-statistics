@@ -928,7 +928,7 @@ async function getUsers(id, selectorName, action, search_surface) {
     
     action.completed += jsonResp.users.length;
     changeProgressText(Math.round(action.completed * 100 / action.quantity) + "%");
-      await dynamicSleep(delaySleep);
+    await dynamicSleep(delaySleep);
   }
   return followers;
 }
@@ -994,6 +994,9 @@ async function generateFirstList(action) {
   const followings = getFollowings(action, userId);
   return Promise.all([followers, followings]).then(values => {
     if (!action.isAborted) {
+      if (values[0].size + values[1].size < action.quantity) {
+        throw new Error("The whole list of followers/following isn't available at the moment");
+      }
       intro.remove();
       const statistics = showStatisctic();
       statistics.appendChild(getDownloadBtn(new Statistics(...values, userId), username));
