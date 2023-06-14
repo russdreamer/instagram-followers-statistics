@@ -352,7 +352,7 @@ async function getUserInfo(provided_username) {
   const username = provided_username? provided_username: getUsername();
   const appID = await getAppId();
 
-  const url = "https://i.instagram.com/api/v1/users/web_profile_info/?username=" + username;
+  const url = "https://www.instagram.com/api/v1/users/web_profile_info/?username=" + username;
   const body = {
         method: 'GET',
         headers: {
@@ -391,7 +391,7 @@ async function getUserInfo(provided_username) {
 
 async function getFriendshipStatuses(ids) {
   const body = 'user_ids=' + encodeURIComponent(ids.join());
-  let url = 'https://i.instagram.com/api/v1/friendships/show_many/';
+  let url = 'https://www.instagram.com/api/v1/friendships/show_many/';
   const appID = await getAppId(); 
 
   let response = await fetch(
@@ -545,13 +545,13 @@ async function unfollowAllAccounts(action) {
 }
 
 async function getFollowUsersBatch(selectorName, id, totalUsersNumber, nextMaxId, search_surface) {
-  const url = `https://i.instagram.com/api/v1/friendships/${id}/${selectorName}/?count=${totalUsersNumber}${nextMaxId? '&max_id=' + nextMaxId: ''}${search_surface? '&search_surface=' + search_surface: ''}`;
+  const url = `https://www.instagram.com/api/v1/friendships/${id}/${selectorName}/?count=100${nextMaxId? '&max_id=' + nextMaxId: ''}${search_surface? '&search_surface=' + search_surface: ''}`;
   return await getUsersBatch(url);
 }
 
 
 async function getSuggestedUsersBatch(seenIds, totalUsersNumber) {
-  const url = 'https://i.instagram.com/api/v1/discover/ayml/';
+  const url = 'https://www.instagram.com/api/v1/discover/ayml/';
   const body = `max_id=${encodeURI(seenIds)}&max_number_to_display=${totalUsersNumber}&module=discover_people&paginate=true`
   return await getUsersBatch(url, body);
 }
@@ -877,7 +877,7 @@ function getFollowings(action, userID) {
 
 async function getUsers(id, selectorName, action, search_surface) {
   let followers = new Map();
-  let url = `https://i.instagram.com/api/v1/friendships/${id}/${selectorName}/?count=${action.quantity}${search_surface? '&search_surface=' + search_surface: ''}`;
+  let url = `https://www.instagram.com/api/v1/friendships/${id}/${selectorName}/?count=100${search_surface? '&search_surface=' + search_surface: ''}`;
   let hasNext = true;
   let delaySleep = 200;
   changeProgressText("0%");
@@ -924,7 +924,7 @@ async function getUsers(id, selectorName, action, search_surface) {
     addToMap(followers, jsonResp.users);
     const nextMaxId = jsonResp.next_max_id;
     hasNext = nextMaxId != undefined;
-    url = `https://i.instagram.com/api/v1/friendships/${id}/${selectorName}/?count=${action.quantity}&max_id=${nextMaxId}${search_surface? '&search_surface=' + search_surface: ''}`;
+    url = `https://www.instagram.com/api/v1/friendships/${id}/${selectorName}/?count=100&max_id=${nextMaxId}${search_surface? '&search_surface=' + search_surface: ''}`;
     
     action.completed += jsonResp.users.length;
     changeProgressText(Math.round(action.completed * 100 / action.quantity) + "%");
