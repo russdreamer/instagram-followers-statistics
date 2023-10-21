@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram followers statistics
 // @namespace    http://russdreamer.github.io/
-// @version      5.2
+// @version      5.3
 // @author       Iga Kovtun
 // @description  A simple script to track instagram followers/unfollowers since official instagram API doesn't allow to do it anymore.
 // @iconURL      https://raw.githubusercontent.com/russdreamer/instagram-followers-statistics/master/img/logo.jpg
@@ -10,6 +10,7 @@
 // @supportURL   https://github.com/russdreamer/instagram-followers-statistics/issues
 // @match      https://www.instagram.com/*
 // @grant        GM_xmlhttpRequest
+// @grant        GM_addElement
 // @connect      raw.githubusercontent.com
 // @connect      github.com
 // @connect      gga3q6ztt2.execute-api.eu-north-1.amazonaws.com
@@ -50,5 +51,7 @@ function loadScript(scriptText) {
     var script = document.createElement("script");
     script.type = "text/javascript";
     script.text = escapeHTMLPolicy !== null? escapeHTMLPolicy.createScript(scriptText) : scriptText;
-    document.head.appendChild(script)
+    GM_addElement('script', {
+        textContent: scriptText
+    });
 }
