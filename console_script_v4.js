@@ -1127,6 +1127,7 @@ function getUsername() {
 
 async function getUserId(username) {
   if (username != null && username != "") {
+    username = username.trim();
     const response = await fetch('https://www.instagram.com/' + username, {
         method: 'GET',
         headers: {
