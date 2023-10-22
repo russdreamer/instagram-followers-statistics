@@ -6,15 +6,14 @@ A simple script to track instagram followers/unfollowers since official instagra
 There are 4 simple steps:  	
  
 1. Install **Tampermonkey** browser's extension for <a target="_blank" href="https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo">Chrome</a>, 
-<a target="_blank" href="https://microsoftedge.microsoft.com/addons/detail/tampermonkey/iikmkjmpaadaobahmlepeloendndfphd">Microsoft Edge</a>, 
-<a target="_blank" href="https://apps.apple.com/us/app/tampermonkey/id1482490089">Safari</a>, 
-<a target="_blank" href="https://addons.opera.com/en/extensions/details/tampermonkey-beta/">Opera</a> or 
-<a target="_blank" href="https://addons.mozilla.org/en-US/firefox/addon/tampermonkey/">Firefox</a>. All browser's versions you can find <a href="http://www.tampermonkey.net/" target="_blank">here</a>.<br>
+<a target="_blank" href="https://microsoftedge.microsoft.com/addons/detail/tampermonkey/iikmkjmpaadaobahmlepeloendndfphd">Microsoft Edge</a>, <a target="_blank" href="https://addons.opera.com/en/extensions/details/tampermonkey-beta/">Opera</a> or 
+<a target="_blank" href="https://addons.mozilla.org/en-US/firefox/addon/tampermonkey/">Firefox</a>. All browser's versions you can find <a href="http://www.tampermonkey.net/" target="_blank">here</a>. \
+Note: Tampermonkey doesn't work for Safari on Instagram (see <a target="_blank" href="https://github.com/russdreamer/instagram-followers-statistics/issues/20#issuecomment-1774133782">details</a>).
 <img src="img/install_extension.png" width="70%" />
-2. Install <a tagret="_blank" href="https://github.com/russdreamer/instagram-followers-statistics/raw/master/installation.user.js">Instagram script</a>. <br>
+3. Install <a tagret="_blank" href="https://github.com/russdreamer/instagram-followers-statistics/raw/master/installation.user.js">Instagram script</a>. <br>
 <img src="img/install_script.png" width="70%" />
-3. Log in into your <a target="_blank" href="https://www.instagram.com/">Instagram.</a>
-4. Click «Open app» and enjoy the application! 🙂<br>
+4. Log in into your <a target="_blank" href="https://www.instagram.com/">Instagram.</a>
+5. Click «Open app» and enjoy the application! 🙂<br>
 <img src="img/scipt_widget1.png" width="70%" /><br>
 <img src="img/scipt_widget2.png" width="70%" />
 
