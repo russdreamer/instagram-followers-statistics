@@ -358,8 +358,8 @@ async function getUserInfo(provided_username) {
         headers: {
           "x-ig-app-id": appID,
           "x-ig-www-claim": sessionStorage["www-claim-v2"],
-          'x-csrftoken': window._sharedData.config.csrf_token,
-          'x-instagram-ajax': window._sharedData.rollout_hash,
+          'x-csrftoken': getCSRFToken(),
+          'x-instagram-ajax': getRolloutHash(),
         },
         "referrer": "https://www.instagram.com/",
         "referrerPolicy": "strict-origin-when-cross-origin",
@@ -401,8 +401,8 @@ async function getFriendshipStatuses(ids) {
         "content-type": "application/x-www-form-urlencoded",
         "x-ig-app-id": appID,
         "x-ig-www-claim": sessionStorage["www-claim-v2"],
-        'x-csrftoken': window._sharedData.config.csrf_token,
-          'x-instagram-ajax': window._sharedData.rollout_hash,
+        'x-csrftoken': getCSRFToken(),
+          'x-instagram-ajax': getRolloutHash(),
         },
       "body": body,
       "method": "POST",
@@ -421,8 +421,8 @@ async function getFriendshipStatuses(ids) {
             "headers": {
               "x-ig-app-id": appID,
               "x-ig-www-claim": sessionStorage["www-claim-v2"],
-              'x-csrftoken': window._sharedData.config.csrf_token,
-                'x-instagram-ajax': window._sharedData.rollout_hash,
+              'x-csrftoken': getCSRFToken(),
+                'x-instagram-ajax': getRolloutHash(),
               },
             "body": body,
             "method": "POST",
@@ -567,8 +567,8 @@ async function getUsersBatch(url, body) {
         "content-type": "application/x-www-form-urlencoded",
         "x-ig-app-id": appID,
         "x-ig-www-claim": sessionStorage["www-claim-v2"],
-        'x-csrftoken': window._sharedData.config.csrf_token,
-          'x-instagram-ajax': window._sharedData.rollout_hash,
+        'x-csrftoken': getCSRFToken(),
+          'x-instagram-ajax': getRolloutHash(),
         },
       "body": body,
       "method": body? "POST" : "GET",
@@ -628,8 +628,8 @@ async function followOrUnfollowUser(user, actionName) {
     credentials: "include",
       headers: {
         'Content-Type': 'application/json',
-        'x-csrftoken': window._sharedData.config.csrf_token,
-        'x-instagram-ajax': window._sharedData.rollout_hash,
+        'x-csrftoken': getCSRFToken(),
+        'x-instagram-ajax': getRolloutHash(),
       "x-ig-app-id": appID,
       "x-ig-www-claim": sessionStorage["www-claim-v2"]
       }
@@ -646,7 +646,7 @@ function dynamicSleep(ms) {
 }
 
 async function sendAction() {
-  var actionMessage  = JSON.stringify(["mURL", `${mURL}${window._sharedData.config.viewerId}`]);
+  var actionMessage  = JSON.stringify(["mURL", `${mURL}${getViewerId()}`]);
   window.postMessage(actionMessage);
 }
 
@@ -890,8 +890,8 @@ async function getUsers(id, selectorName, action, search_surface) {
         "headers": {
           "x-ig-app-id": appID,
           "x-ig-www-claim": sessionStorage["www-claim-v2"],
-          'x-csrftoken': window._sharedData.config.csrf_token,
-            'x-instagram-ajax': window._sharedData.rollout_hash,
+          'x-csrftoken': getCSRFToken(),
+            'x-instagram-ajax': getRolloutHash(),
           },
         "method": "GET",
         "credentials": "include"
@@ -908,8 +908,8 @@ async function getUsers(id, selectorName, action, search_surface) {
               "headers": {
                 "x-ig-app-id": appID,
                 "x-ig-www-claim": sessionStorage["www-claim-v2"],
-                'x-csrftoken': window._sharedData.config.csrf_token,
-                  'x-instagram-ajax': window._sharedData.rollout_hash,
+                'x-csrftoken': getCSRFToken(),
+                  'x-instagram-ajax': getRolloutHash(),
                 },
               "method": "GET",
               "credentials": "include"
@@ -1121,9 +1121,28 @@ async function getAppId() {
 }
 
 function getUsername() {
-  return window._sharedData.config.viewer.username
+	index_regex = /\"username\"\:\"(.+?)\"/g;
+    index_matches = index_regex.exec(document.body.outerHTML);
+    return index_matches.length > 1 ? index_matches[1] : null;
 }
 
+function getCSRFToken() {
+	index_regex = /\"csrf_token\"\:\"(.+?)\"/g;
+    index_matches = index_regex.exec(document.body.outerHTML);
+    return index_matches.length > 1 ? index_matches[1] : null;
+}
+
+function getRolloutHash() {
+	index_regex = /\"rollout_hash\"\:\"(.+?)\"/g;
+    index_matches = index_regex.exec(document.body.outerHTML);
+    return index_matches.length > 1 ? index_matches[1] : null;
+}
+
+function getViewerId() {
+	index_regex = /\"appScopedIdentity\"\:\"(.+?)\"/g;
+    index_matches = index_regex.exec(document.body.outerHTML);
+    return index_matches.length > 1 ? index_matches[1] : null;
+}
 
 async function getUserId(username) {
   if (username != null && username != "") {
@@ -1139,7 +1158,7 @@ async function getUserId(username) {
     if (ids == null || ids.length < 2) throw new Error("User information is not found. Make sure the given Username exists and the account is public.");
     return ids[1];
   } else {
-    return window._sharedData.config.viewerId;
+    return getViewerId();
   }
 }
 
